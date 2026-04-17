@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nexus | 智能商務錄製系統</title>
+  <title>GrowthX｜Meet & Dairy Recorder</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
@@ -27,10 +27,22 @@
     /* 媒體播放器區域 */
     .video-container { position: relative; width: 100%; max-height: 450px; background: #000; border-radius: 12px; margin-bottom: 24px; overflow: hidden; }
     video { width: 100%; height: 100%; object-fit: contain; }
-    .status-badge { position: absolute; top: 16px; right: 16px; background: rgba(220, 38, 38, 0.9); color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 13px; display: none; z-index: 10; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+    
+    .status-badge { position: absolute; top: 16px; right: 16px; background: rgba(220, 38, 38, 0.9); color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 13px; display: none; z-index: 10; letter-spacing: 0.5px; align-items: center; gap: 6px; }
     .pulse-dot { width: 8px; height: 8px; background-color: white; border-radius: 50%; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
     
+    /* 懸浮控制列 (閒置自動隱藏) */
+    .controls-overlay { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); padding: 10px 24px; border-radius: 100px; display: flex; gap: 20px; align-items: center; opacity: 0; transition: opacity 0.3s ease; z-index: 20; }
+    .video-container.active-controls .controls-overlay { opacity: 1; }
+    
+    .control-btn { background: none; border: none; color: white; cursor: pointer; padding: 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .control-btn:hover { background: rgba(255, 255, 255, 0.2); }
+    .control-btn.stop-btn:hover { background: rgba(239, 68, 68, 0.8); }
+    .control-btn.pause-btn:hover { background: rgba(245, 158, 11, 0.8); }
+    .control-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .control-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); }
+
     /* 表單與按鈕設計 */
     .form-control-lg { border-radius: 8px; border: 1px solid var(--border); padding: 14px 16px; font-size: 15px; box-shadow: none; }
     .form-control-lg:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
@@ -42,16 +54,13 @@
     .btn-outline { background-color: transparent; color: var(--primary); border: 1px solid var(--border); font-weight: 500; padding: 10px 20px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
     .btn-outline:hover:not(:disabled) { background-color: #f1f5f9; }
     
-    .btn-danger-custom { background-color: #ef4444; color: white; border: none; }
-    .btn-danger-custom:hover:not(:disabled) { background-color: #dc2626; }
-    
     /* 日誌與結果區域 */
     .log-box { height: 160px; overflow-y: auto; background: #f8fafc; color: var(--text-muted); padding: 16px; border-radius: 8px; border: 1px solid var(--border); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; line-height: 1.6; }
     
-    .result-editor { width: 100%; min-height: 300px; padding: 20px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-size: 15px; line-height: 1.8; color: var(--text-main); resize: vertical; outline: none; transition: border 0.2s; }
+    .result-editor { width: 100%; min-height: 350px; padding: 20px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-size: 14px; line-height: 1.8; color: var(--text-main); resize: vertical; outline: none; transition: border 0.2s; }
     .result-editor:focus { border-color: var(--accent); }
     
-    .url-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); }
+    .url-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; }
     .url-text { flex-grow: 1; font-family: monospace; font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
     details summary { cursor: pointer; padding: 16px; background-color: var(--bg); border-radius: 8px; font-weight: 500; color: var(--text-main); border: 1px solid var(--border); list-style: none; display: flex; align-items: center; gap: 8px; }
@@ -61,17 +70,38 @@
 <body>
 
 <div class="card-premium">
-  <div class="d-flex align-items-center justify-content-center gap-2 mb-5">
+  <div class="d-flex align-items-center justify-content-center gap-2 mb-4">
     <i data-lucide="layers" style="width: 28px; height: 28px; color: var(--primary);"></i>
-    <h2 class="m-0 fw-bold" style="color: var(--primary); letter-spacing: -0.5px;">Nexus</h2>
+    <h2 class="m-0 fw-bold" style="color: var(--primary); letter-spacing: -0.5px;">GrowthX｜Meet & Dairy Recorder</h2>
   </div>
   
-  <div class="video-container">
-    <div id="recBadge" class="status-badge" style="display: none;">
+  <div class="video-container" id="videoContainer">
+    <div id="recBadge" class="status-badge">
       <div class="pulse-dot"></div>
       <span>REC</span>
     </div>
     <video id="mediaPlayer" autoplay muted playsinline></video>
+    
+    <div class="controls-overlay" id="playerControls">
+      <button class="control-btn" id="btnSwitchSource" onclick="switchSourceAction()" title="切換鏡頭/螢幕">
+        <i data-lucide="refresh-ccw" id="icon-source"></i>
+      </button>
+      <button class="control-btn" id="btnToggleVideo" onclick="toggleVideo()" title="開啟/關閉畫面">
+        <i data-lucide="eye-off" id="icon-video"></i>
+      </button>
+      
+      <div class="control-divider" id="recordDivider" style="display:none;"></div>
+      
+      <button class="control-btn pause-btn" id="btnPause" onclick="pauseMeeting()" title="暫停錄製" style="display:none;">
+        <i data-lucide="pause"></i>
+      </button>
+      <button class="control-btn play-btn" id="btnResume" onclick="resumeMeeting()" title="繼續錄製" style="display:none;">
+        <i data-lucide="play"></i>
+      </button>
+      <button class="control-btn stop-btn" id="btnStop" onclick="stopMeeting()" title="結束會議並總結" style="display:none;">
+        <i data-lucide="square"></i>
+      </button>
+    </div>
   </div>
 
   <div id="step-auth" class="step-section active">
@@ -104,51 +134,27 @@
       <textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="請輸入參與者姓名..."></textarea>
     </div>
     <button class="btn-brand w-100" id="btnStartSetup" onclick="startMeeting()">
-      <i data-lucide="play-circle" style="width:20px;"></i> 建立會議並準備錄製
+      <i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製
     </button>
   </div>
 
   <div id="step-recording" class="step-section">
-    <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
-      <button class="btn-outline" id="btnSwitchSource" onclick="switchSourceAction()">
-        <i data-lucide="camera" style="width:18px;" id="icon-source"></i> <span id="text-source">切換裝置</span>
-      </button>
-      <button class="btn-outline" id="btnToggleVideo" onclick="toggleVideo()">
-        <i data-lucide="eye" style="width:18px;" id="icon-video"></i> <span id="text-video">開啟畫面</span>
-      </button>
-    </div>
-
-    <div class="d-flex justify-content-center flex-wrap gap-3 mb-4">
-      <button class="btn-outline" id="btnPause" onclick="pauseMeeting()" style="border-color: #f59e0b; color: #d97706;">
-        <i data-lucide="pause" style="width:18px;"></i> 暫停
-      </button>
-      <button class="btn-outline" id="btnResume" onclick="resumeMeeting()" style="display:none; border-color: #10b981; color: #059669;">
-        <i data-lucide="play" style="width:18px;"></i> 繼續
-      </button>
-      <button class="btn-brand btn-danger-custom" id="btnStop" onclick="stopMeeting()">
-        <i data-lucide="square" style="width:18px; fill: currentColor;"></i> 結束會議
-      </button>
-    </div>
-
-    <label class="form-label fw-bold text-secondary fs-6">執行日誌</label>
+    <label class="form-label fw-bold text-secondary fs-6">系統執行日誌</label>
     <div id="systemLog" class="log-box mb-2">系統啟動中...<br></div>
   </div>
   
   <div id="step-result" class="step-section mt-2">
-    
-    <div class="mb-4">
-      <label class="form-label fw-bold text-secondary">雲端錄影檔案 (公開檢視)</label>
+    <div id="docLinkArea" style="display:none;">
+      <label class="form-label fw-bold text-secondary">Google 文件連結 (公開檢視)</label>
       <div class="url-box">
-        <i data-lucide="link" style="width:16px; color: var(--text-muted);"></i>
-        <div class="url-text" id="videoUrlText">載入中...</div>
-        <button class="btn-outline" style="padding: 6px 12px; font-size: 13px;" onclick="copyVideoUrl()">複製</button>
+        <i data-lucide="file-text" style="width:16px; color: var(--accent);"></i>
+        <div class="url-text" id="docUrlText">載入中...</div>
+        <button class="btn-outline" style="padding: 6px 12px; font-size: 13px;" onclick="copyToClipboard('docUrlText')">複製</button>
       </div>
     </div>
 
-    <div class="mb-4">
-      <label class="form-label fw-bold text-secondary d-flex justify-content-between align-items-end">
-        <span>專業會議總結 (可自由編輯)</span>
-      </label>
+    <div class="mb-4 mt-3">
+      <label class="form-label fw-bold text-secondary">專業會議總結 (可自由編輯)</label>
       <textarea id="finalSummary" class="result-editor"></textarea>
       
       <div class="d-flex gap-2 mt-3 justify-content-end flex-wrap">
@@ -167,11 +173,11 @@
       <div id="fullDetails" class="p-3 mt-2 border rounded bg-white text-muted" style="white-space: pre-wrap; font-size: 13px; line-height: 1.6; max-height: 400px; overflow-y: auto;"></div>
     </details>
   </div>
-
 </div>
 
+<div class="text-center mt-5 text-muted" style="font-size: 13px;">All Copyright recieved by ... GrowthX｜微企AI學院</div>
+
 <script>
-  // 初始化 Lucide 圖示
   lucide.createIcons();
 
   // ==========================================
@@ -199,22 +205,33 @@
   const mediaPlayer = document.getElementById('mediaPlayer');
   const logBox = document.getElementById('systemLog');
   const recBadge = document.getElementById('recBadge');
+  const videoContainer = document.getElementById('videoContainer');
 
+  // --- 懸浮控制列自動隱藏邏輯 ---
+  let hideControlsTimeout;
+  function wakeControls() {
+    videoContainer.classList.add('active-controls');
+    clearTimeout(hideControlsTimeout);
+    hideControlsTimeout = setTimeout(() => {
+      videoContainer.classList.remove('active-controls');
+    }, 2500);
+  }
+  videoContainer.addEventListener('mousemove', wakeControls);
+  videoContainer.addEventListener('click', wakeControls);
+  videoContainer.addEventListener('touchstart', wakeControls);
+  wakeControls(); // 初始顯示
+
+  // --- 網頁載入初始化 ---
   window.onload = async () => {
-    updateSourceButtonUI();
-    try {
-      await acquireStream();
-      logMsg("authMsg", "認證設備成功，目前為純語音模式", "text-success");
-    } catch (err) {
-      logMsg("authMsg", "請允許瀏覽器存取麥克風與相機權限", "text-danger");
-    }
-  };
-
-  function updateSourceButtonUI() {
-    document.getElementById('text-source').innerText = isMobile ? "切換鏡頭方向" : "切換電腦畫面";
     document.getElementById('icon-source').setAttribute('data-lucide', isMobile ? "smartphone" : "monitor");
     lucide.createIcons();
-  }
+    try {
+      await acquireStream();
+      logMsg("authMsg", "[系統] 設備授權成功，目前為純語音模式", "text-success");
+    } catch (err) {
+      logMsg("authMsg", "[錯誤] 請允許瀏覽器存取麥克風與相機權限", "text-danger");
+    }
+  };
 
   function switchStep(stepId) {
     document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
@@ -230,7 +247,7 @@
   function logMsg(elementId, msg, colorClass) {
     const el = document.getElementById(elementId);
     el.innerText = msg;
-    el.className = `text-center mt-2 fs-6 ${colorClass}`;
+    el.className = `text-center mt-2 fs-6 fw-bold ${colorClass}`;
   }
 
   async function callGasAPI(payload) {
@@ -257,10 +274,10 @@
       const res = await callGasAPI({ action: "sendCode", email: email });
       if (res.status === 'success') {
         document.getElementById('codeGroup').style.display = 'block';
-        logMsg("authMsg", "已發送至信箱", "text-success");
+        logMsg("authMsg", "[成功] 已發送至信箱", "text-success");
       } else throw new Error(res.message);
     } catch (err) {
-      logMsg("authMsg", "發送失敗", "text-danger");
+      logMsg("authMsg", "[錯誤] 發送失敗", "text-danger");
       document.getElementById('btnSendCode').disabled = false;
     }
   }
@@ -278,7 +295,7 @@
         switchStep('step-setup'); 
       } else throw new Error(res.message);
     } catch (err) {
-      logMsg("authMsg", "驗證失敗: 代碼錯誤", "text-danger");
+      logMsg("authMsg", "[錯誤] 驗證失敗: 代碼錯誤", "text-danger");
       document.getElementById('btnVerify').disabled = false;
     }
   }
@@ -291,23 +308,24 @@
     if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; });
   }
 
-  // === 獲取串流 ===
+  // === 獲取串流 (強制 480p) ===
   async function acquireStream() {
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
     const constraints = { audio: true };
     try {
       if (isMobile) {
-        constraints.video = { facingMode: mobileFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } };
+        // 480p resolution
+        constraints.video = { facingMode: mobileFacingMode, width: { ideal: 854 }, height: { ideal: 480 } };
         currentStream = await navigator.mediaDevices.getUserMedia(constraints);
       } else {
         if (desktopSource === "camera") {
-          constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 } };
+          constraints.video = { width: { ideal: 854 }, height: { ideal: 480 } };
           currentStream = await navigator.mediaDevices.getUserMedia(constraints);
         } else {
           currentStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
           currentStream.getVideoTracks()[0].onended = () => {
             if (isRecording) {
-              log("畫面分享中斷，切回視訊鏡頭");
+              log("[系統] 畫面分享中斷，切回視訊鏡頭");
               desktopSource = "camera";
               acquireStream().then(() => { if (isRecording) startChunkRecording(); });
             }
@@ -327,7 +345,7 @@
   async function switchSourceAction() {
     const wasRecording = isRecording;
     if (wasRecording && mediaRecorder && mediaRecorder.state === "recording") {
-      log("切換畫面中...");
+      log("[系統] 切換畫面中...");
       mediaRecorder.stop(); 
       clearTimeout(chunkInterval);
     }
@@ -338,11 +356,11 @@
     try {
       await acquireStream();
       if (wasRecording) {
-        log("畫面切換完成，繼續錄製");
+        log("[成功] 畫面切換完成，繼續錄製");
         startChunkRecording();
       }
     } catch (e) {
-      log("切換失敗，請確認權限");
+      log("[錯誤] 切換失敗，請確認權限");
     }
   }
 
@@ -352,15 +370,13 @@
       if (videoTrack) {
         isVideoEnabled = !isVideoEnabled;
         videoTrack.enabled = isVideoEnabled;
-        const textEl = document.getElementById('text-video');
         const iconEl = document.getElementById('icon-video');
-        
         if (isVideoEnabled) {
-          textEl.innerText = "關閉畫面 (純錄音)";
-          iconEl.setAttribute('data-lucide', 'eye-off');
-        } else {
-          textEl.innerText = "開啟畫面預覽";
           iconEl.setAttribute('data-lucide', 'eye');
+          log("[系統] 已開啟畫面預覽");
+        } else {
+          iconEl.setAttribute('data-lucide', 'eye-off');
+          log("[系統] 畫面已關閉，純語音模式");
         }
         lucide.createIcons();
       }
@@ -383,6 +399,11 @@
         meetingData = res.data;
         switchStep('step-recording'); 
         
+        // 顯示懸浮列上的錄製控制項
+        document.getElementById('recordDivider').style.display = 'block';
+        document.getElementById('btnPause').style.display = 'flex';
+        document.getElementById('btnStop').style.display = 'flex';
+
         if (!currentStream) await acquireStream();
         
         if (currentStream && currentStream.getAudioTracks().length > 0) {
@@ -391,7 +412,7 @@
           recBadge.style.display = 'flex';
           
           await requestWakeLock(); 
-          log("系統啟動：每分鐘執行雙軌並行傳輸");
+          log("[錄製] 正式開始！系統將進行雙軌並行傳輸");
           startChunkRecording();
         }
       } else throw new Error(res.message);
@@ -399,25 +420,25 @@
       alert("啟動失敗：" + err.message);
       const btn = document.getElementById('btnStartSetup');
       btn.disabled = false;
-      btn.innerHTML = `<i data-lucide="play-circle" style="width:20px;"></i> 建立會議並準備錄製`;
+      btn.innerHTML = `<i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製`;
       lucide.createIcons();
     }
   }
 
   function pauseMeeting() {
     if (mediaRecorder && mediaRecorder.state === "recording") {
-      log("錄製暫停");
+      log("[暫停] 錄製暫停，上傳當前檔案");
       mediaRecorder.stop(); 
       clearTimeout(chunkInterval);
       document.getElementById('btnPause').style.display = 'none';
       document.getElementById('btnResume').style.display = 'flex';
       recBadge.style.background = "#f59e0b";
-      recBadge.querySelector('span').innerText = "PAUSED";
+      recBadge.querySelector('span').innerText = "PAUSE";
     }
   }
 
   function resumeMeeting() {
-    log("錄製恢復");
+    log("[錄製] 錄製恢復");
     if (currentStream) {
       startChunkRecording(); 
       document.getElementById('btnResume').style.display = 'none';
@@ -450,7 +471,7 @@
   }
 
   function processAndUploadChunk(blob, mimeType, currentIndex) {
-    log(`> 處理區段 ${currentIndex}：並行傳輸中...`);
+    log(`[傳輸] 區段 ${currentIndex} 雙軌並行傳輸中...`);
     const taskPromise = new Promise((resolve) => {
       const reader = new FileReader();
       reader.readAsDataURL(blob);
@@ -461,7 +482,7 @@
         const p2 = callGasAPI({ action: "recognizeAI", base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         
         await Promise.all([p1, p2]);
-        log(`- 區段 ${currentIndex} 寫入完成`);
+        log(`[完成] 區段 ${currentIndex} 建檔與辨識寫入完成`);
         resolve();
       };
     });
@@ -476,17 +497,10 @@
     recBadge.style.display = 'none';
     releaseWakeLock(); 
     
-    const btnStop = document.getElementById('btnStop');
-    btnStop.disabled = true;
-    btnStop.innerHTML = `<i data-lucide="loader" style="width:18px;"></i> 統整中...`;
-    lucide.createIcons();
+    // 隱藏控制列上的所有按鈕
+    document.getElementById('playerControls').style.display = 'none';
 
-    document.getElementById('btnPause').style.display = 'none';
-    document.getElementById('btnResume').style.display = 'none';
-    document.getElementById('btnSwitchSource').style.display = 'none';
-    document.getElementById('btnToggleVideo').style.display = 'none';
-
-    log("提取最終區段資料...");
+    log("[系統] 提取最終區段資料...");
 
     const onStopPromise = new Promise(resolve => {
       if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
@@ -500,41 +514,39 @@
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
 
     if (activeProcessingTasks.size > 0) {
-      log(`等待 ${activeProcessingTasks.size} 筆背景任務完成寫入...`);
+      log(`[鎖定] 嚴格等待 ${activeProcessingTasks.size} 筆背景任務完成寫入...`);
       while(activeProcessingTasks.size > 0) {
         await Promise.all(Array.from(activeProcessingTasks));
       }
     }
 
-    log("呼叫 AI 進行總結...");
+    log("[系統] 呼叫 AI 進行會議總結...");
     
     try {
       const res = await callGasAPI({ action: "finalizeMeeting", rowIndex: meetingData.rowIndex, email: loggedInEmail });
       if (res.status === 'success') {
         switchStep('step-result'); 
         
-        // 填入資料
-        document.getElementById('finalSummary').value = res.data.summary;
+        finalVideoUrls = res.data.videoUrls || "無影片紀錄";
+        
+        // 將影片網址附加在編輯器最後
+        const finalContent = res.data.summary + "\n\n【雲端影音檔案連結】\n" + finalVideoUrls;
+        document.getElementById('finalSummary').value = finalContent;
         document.getElementById('fullDetails').innerText = res.data.details;
         
-        // 處理 URL 顯示
-        finalVideoUrls = res.data.videoUrls || "尚未產生錄影檔案";
-        document.getElementById('videoUrlText').innerText = finalVideoUrls.split(',')[0]; // 只顯示第一段作代表，複製時複製全部
-        
       } else {
-        log("總結失敗: " + res.message);
-        btnStop.innerHTML = "總結失敗";
+        log("[錯誤] 總結失敗: " + res.message);
       }
     } catch(err) {
-      log("異常: " + err.message);
+      log("[錯誤] 異常: " + err.message);
     }
   }
 
   // === 擴充操作：儲存、匯出、複製 ===
-  
-  function copyVideoUrl() {
-    navigator.clipboard.writeText(finalVideoUrls).then(() => {
-      showFeedback("已複製影片網址");
+  function copyToClipboard(elementId) {
+    const text = document.getElementById(elementId).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      showFeedback("網址已複製");
     });
   }
 
@@ -566,10 +578,15 @@
     const details = document.getElementById('fullDetails').innerText;
     
     try {
-      const res = await callGasAPI({ action: "createDoc", meetingName: meetingData.meetingName, summary: summary, details: details });
+      const res = await callGasAPI({ action: "createDoc", meetingName: meetingData.meetingName, summary: summary, details: details, folderId: meetingData.folderId });
       if(res.status === 'success') {
         showFeedback("文件已建立！");
-        window.open(res.data, '_blank'); // 另開視窗前往 Doc
+        
+        // 顯示文件連結 UI
+        document.getElementById('docLinkArea').style.display = 'block';
+        document.getElementById('docUrlText').innerText = res.data;
+        
+        window.open(res.data, '_blank'); 
       }
     } catch(err) {
       showFeedback("建立失敗", true);
@@ -582,7 +599,7 @@
   function showFeedback(msg, isError = false) {
     const el = document.getElementById('actionFeedback');
     el.innerText = msg;
-    el.className = `text-end mt-2 fs-6 ${isError ? 'text-danger' : 'text-success'}`;
+    el.className = `text-end mt-2 fs-6 fw-bold ${isError ? 'text-danger' : 'text-success'}`;
     setTimeout(() => { el.innerText = ""; }, 3000);
   }
 </script>
