@@ -3,124 +3,194 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 智能商務錄製系統</title>
+  <title>Nexus | 智能商務錄製系統</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    :root { --primary-color: #2563eb; --surface-color: #ffffff; --bg-color: #f8fafc; }
-    body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; color: #1e293b; }
+    :root { 
+      --primary: #0f172a; 
+      --primary-hover: #334155;
+      --accent: #2563eb;
+      --surface: #ffffff; 
+      --bg: #f8fafc; 
+      --border: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+    }
+    body { background-color: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; color: var(--text-main); }
     
-    /* 2026 現代卡片設計：大圓角、柔和陰影 */
-    .card-modern { background: var(--surface-color); border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); max-width: 800px; margin: auto; padding: 35px; border: none; transition: all 0.3s ease; }
+    .card-premium { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,0.03); max-width: 800px; margin: auto; padding: 40px; transition: all 0.3s ease; }
     
-    /* UI 漸進式揭露區塊 */
     .step-section { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
     .step-section.active { display: block; opacity: 1; }
     
-    /* 影片與狀態徽章 */
-    .video-container { position: relative; width: 100%; max-height: 450px; background: #0f172a; border-radius: 16px; margin-bottom: 24px; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+    /* 媒體播放器區域 */
+    .video-container { position: relative; width: 100%; max-height: 450px; background: #000; border-radius: 12px; margin-bottom: 24px; overflow: hidden; }
     video { width: 100%; height: 100%; object-fit: contain; }
-    .status-badge { position: absolute; top: 16px; right: 16px; background: rgba(239, 68, 68, 0.9); color: white; padding: 6px 14px; border-radius: 8px; font-weight: 600; font-size: 14px; display: none; z-index: 10; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
+    .status-badge { position: absolute; top: 16px; right: 16px; background: rgba(220, 38, 38, 0.9); color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 13px; display: none; z-index: 10; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+    .pulse-dot { width: 8px; height: 8px; background-color: white; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
     
-    /* 無障礙大按鍵與輸入框 */
-    .form-control-lg { border-radius: 12px; border: 1px solid #cbd5e1; padding: 14px 20px; font-size: 16px; }
-    .form-control-lg:focus { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); border-color: var(--primary-color); }
-    .btn-custom { font-weight: 600; padding: 14px 24px; border-radius: 12px; font-size: 16px; transition: transform 0.1s, box-shadow 0.2s; }
-    .btn-custom:active { transform: scale(0.98); }
+    /* 表單與按鈕設計 */
+    .form-control-lg { border-radius: 8px; border: 1px solid var(--border); padding: 14px 16px; font-size: 15px; box-shadow: none; }
+    .form-control-lg:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
     
-    /* AI 透明度日誌區塊 */
-    .log-box { height: 200px; overflow-y: auto; background: #1e293b; color: #4ade80; padding: 20px; border-radius: 12px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; border: 1px solid #334155; }
+    .btn-brand { background-color: var(--primary); color: white; font-weight: 500; padding: 12px 24px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+    .btn-brand:hover:not(:disabled) { background-color: var(--primary-hover); color: white; }
+    .btn-brand:disabled { background-color: #cbd5e1; cursor: not-allowed; }
     
-    /* 總結區塊細節 */
-    summary { cursor: pointer; padding: 14px; background-color: #f1f5f9; border-radius: 12px; font-weight: 600; color: #475569; border: 1px solid #e2e8f0; }
-    summary:hover { background-color: #e2e8f0; }
+    .btn-outline { background-color: transparent; color: var(--primary); border: 1px solid var(--border); font-weight: 500; padding: 10px 20px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+    .btn-outline:hover:not(:disabled) { background-color: #f1f5f9; }
+    
+    .btn-danger-custom { background-color: #ef4444; color: white; border: none; }
+    .btn-danger-custom:hover:not(:disabled) { background-color: #dc2626; }
+    
+    /* 日誌與結果區域 */
+    .log-box { height: 160px; overflow-y: auto; background: #f8fafc; color: var(--text-muted); padding: 16px; border-radius: 8px; border: 1px solid var(--border); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; line-height: 1.6; }
+    
+    .result-editor { width: 100%; min-height: 300px; padding: 20px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-size: 15px; line-height: 1.8; color: var(--text-main); resize: vertical; outline: none; transition: border 0.2s; }
+    .result-editor:focus { border-color: var(--accent); }
+    
+    .url-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); }
+    .url-text { flex-grow: 1; font-family: monospace; font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    
+    details summary { cursor: pointer; padding: 16px; background-color: var(--bg); border-radius: 8px; font-weight: 500; color: var(--text-main); border: 1px solid var(--border); list-style: none; display: flex; align-items: center; gap: 8px; }
+    details summary::-webkit-details-marker { display: none; }
   </style>
 </head>
 <body>
 
-<div class="card-modern">
-  <h2 class="text-center mb-4 fw-bold" style="color: #0f172a;">✨ AI 智能商務錄製系統</h2>
+<div class="card-premium">
+  <div class="d-flex align-items-center justify-content-center gap-2 mb-5">
+    <i data-lucide="layers" style="width: 28px; height: 28px; color: var(--primary);"></i>
+    <h2 class="m-0 fw-bold" style="color: var(--primary); letter-spacing: -0.5px;">Nexus</h2>
+  </div>
   
   <div class="video-container">
-    <div id="recBadge" class="status-badge">REC 🔴</div>
+    <div id="recBadge" class="status-badge" style="display: none;">
+      <div class="pulse-dot"></div>
+      <span>REC</span>
+    </div>
     <video id="mediaPlayer" autoplay muted playsinline></video>
   </div>
 
   <div id="step-auth" class="step-section active">
-    <div class="mb-3">
-      <label class="form-label fw-bold">1. 請輸入 Email 登入：</label>
-      <div class="input-group">
+    <div class="mb-4">
+      <label class="form-label fw-bold text-secondary">工作信箱</label>
+      <div class="d-flex gap-2">
         <input type="email" id="authEmail" class="form-control form-control-lg" placeholder="name@company.com">
-        <button class="btn btn-outline-primary px-4 fw-bold" id="btnSendCode" onclick="sendCode()">發送驗證碼</button>
+        <button class="btn-outline" id="btnSendCode" onclick="sendCode()">
+          <i data-lucide="mail" style="width:18px;"></i> 取得驗證碼
+        </button>
       </div>
     </div>
     <div class="mb-4" id="codeGroup" style="display:none;">
-      <label class="form-label fw-bold text-primary">輸入收到的驗證碼：</label>
-      <input type="text" id="authCode" class="form-control form-control-lg mb-3" placeholder="6位數驗證碼">
-      <button class="btn btn-primary w-100 btn-custom" id="btnVerify" onclick="verifyCode()">驗證並登入</button>
+      <label class="form-label fw-bold text-secondary">驗證碼</label>
+      <input type="text" id="authCode" class="form-control form-control-lg mb-3" placeholder="請輸入 6 位數代碼">
+      <button class="btn-brand w-100" id="btnVerify" onclick="verifyCode()">
+        <i data-lucide="log-in" style="width:18px;"></i> 驗證並登入
+      </button>
     </div>
-    <div id="authMsg" class="text-center fw-bold mt-2"></div>
+    <div id="authMsg" class="text-center mt-3 fs-6"></div>
   </div>
 
   <div id="step-setup" class="step-section">
-    <h5 class="fw-bold mb-3 text-primary">2. 設定本次會議基本資訊</h5>
-    <div class="mb-3">
-      <label class="form-label fw-bold">單位 (公司-部門名稱)：</label>
-      <input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：AI 科技 - 研發部">
+    <div class="mb-4">
+      <label class="form-label fw-bold text-secondary">所屬單位</label>
+      <input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：產品研發部">
     </div>
     <div class="mb-4">
-      <label class="form-label fw-bold">與會人員名單：</label>
-      <textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="例如：王小明、李大華..."></textarea>
+      <label class="form-label fw-bold text-secondary">與會人員</label>
+      <textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="請輸入參與者姓名..."></textarea>
     </div>
-    <button class="btn btn-primary w-100 btn-custom fs-5" id="btnStartSetup" onclick="startMeeting()">🚀 啟動錄製與 AI 辨識</button>
+    <button class="btn-brand w-100" id="btnStartSetup" onclick="startMeeting()">
+      <i data-lucide="play-circle" style="width:20px;"></i> 建立會議並準備錄製
+    </button>
   </div>
 
   <div id="step-recording" class="step-section">
     <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
-      <button class="btn btn-outline-secondary fw-bold" id="btnSwitchSource" onclick="switchSourceAction()">🔄 切換鏡頭</button>
-      <button class="btn btn-outline-secondary fw-bold" id="btnToggleVideo" onclick="toggleVideo()">👀 開啟預覽畫面</button>
+      <button class="btn-outline" id="btnSwitchSource" onclick="switchSourceAction()">
+        <i data-lucide="camera" style="width:18px;" id="icon-source"></i> <span id="text-source">切換裝置</span>
+      </button>
+      <button class="btn-outline" id="btnToggleVideo" onclick="toggleVideo()">
+        <i data-lucide="eye" style="width:18px;" id="icon-video"></i> <span id="text-video">開啟畫面</span>
+      </button>
     </div>
 
     <div class="d-flex justify-content-center flex-wrap gap-3 mb-4">
-      <button class="btn btn-warning btn-custom text-dark" id="btnPause" onclick="pauseMeeting()">⏸️ 暫停錄製</button>
-      <button class="btn btn-success btn-custom" id="btnResume" onclick="resumeMeeting()" style="display:none;">▶️ 繼續錄製</button>
-      <button class="btn btn-danger btn-custom" id="btnStop" onclick="stopMeeting()">⏹️ 結束並產出總結</button>
+      <button class="btn-outline" id="btnPause" onclick="pauseMeeting()" style="border-color: #f59e0b; color: #d97706;">
+        <i data-lucide="pause" style="width:18px;"></i> 暫停
+      </button>
+      <button class="btn-outline" id="btnResume" onclick="resumeMeeting()" style="display:none; border-color: #10b981; color: #059669;">
+        <i data-lucide="play" style="width:18px;"></i> 繼續
+      </button>
+      <button class="btn-brand btn-danger-custom" id="btnStop" onclick="stopMeeting()">
+        <i data-lucide="square" style="width:18px; fill: currentColor;"></i> 結束會議
+      </button>
     </div>
 
-    <h6 class="fw-bold text-secondary">系統狀態監控 (雙軌完全同步並行中)：</h6>
+    <label class="form-label fw-bold text-secondary fs-6">執行日誌</label>
     <div id="systemLog" class="log-box mb-2">系統啟動中...<br></div>
   </div>
   
-  <div id="step-result" class="step-section mt-4">
-    <h4 class="fw-bold text-success mb-3">📝 專業會議總結：</h4>
-    <div id="finalSummary" class="p-4 border border-success rounded bg-white shadow-sm" style="white-space: pre-wrap; font-size: 16px; line-height: 1.8;"></div>
+  <div id="step-result" class="step-section mt-2">
+    
+    <div class="mb-4">
+      <label class="form-label fw-bold text-secondary">雲端錄影檔案 (公開檢視)</label>
+      <div class="url-box">
+        <i data-lucide="link" style="width:16px; color: var(--text-muted);"></i>
+        <div class="url-text" id="videoUrlText">載入中...</div>
+        <button class="btn-outline" style="padding: 6px 12px; font-size: 13px;" onclick="copyVideoUrl()">複製</button>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label fw-bold text-secondary d-flex justify-content-between align-items-end">
+        <span>專業會議總結 (可自由編輯)</span>
+      </label>
+      <textarea id="finalSummary" class="result-editor"></textarea>
+      
+      <div class="d-flex gap-2 mt-3 justify-content-end flex-wrap">
+        <button class="btn-outline" onclick="saveSummary()" id="btnSaveSummary">
+          <i data-lucide="save" style="width:16px;"></i> 儲存變更至資料庫
+        </button>
+        <button class="btn-brand" onclick="exportToDoc()" id="btnExportDoc">
+          <i data-lucide="file-text" style="width:16px;"></i> 建立 Google 文件
+        </button>
+      </div>
+      <div id="actionFeedback" class="text-end mt-2 fs-6 text-success" style="height: 20px;"></div>
+    </div>
     
     <details class="mt-4">
-      <summary>📄 點擊展開：完整畫面描述與逐字稿</summary>
-      <div id="fullDetails" class="p-3 mt-2 border rounded bg-white text-dark" style="white-space: pre-wrap; font-size: 14px; line-height: 1.6;"></div>
+      <summary><i data-lucide="chevron-down" style="width:18px;"></i> 檢視完整畫面描述與逐字稿</summary>
+      <div id="fullDetails" class="p-3 mt-2 border rounded bg-white text-muted" style="white-space: pre-wrap; font-size: 13px; line-height: 1.6; max-height: 400px; overflow-y: auto;"></div>
     </details>
   </div>
 
 </div>
 
 <script>
-  // ==========================================
-  // GAS API URL (已嚴格綁定)
-  // ==========================================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwOQx2kVxAJSMoC6Mpd-k7OtwQWD_4RrAofhJu00XYnHn5RCi3VfLbCoSnqcP3LhTE/exec";
+  // 初始化 Lucide 圖示
+  lucide.createIcons();
 
-  // 全域變數
+  // ==========================================
+  // ⚠️ 請填入你的 GAS URL
+  // ==========================================
+  const GAS_URL = "請在此貼上你最新的_GAS_網頁應用程式網址";
+
   let loggedInEmail = "";
   let currentStream = null;
   let mediaRecorder = null;
   let chunkInterval;
   let chunkIndex = 1;
-  let meetingData = { folderId: '', rowIndex: 0 };
+  let meetingData = { folderId: '', rowIndex: 0, meetingName: '' };
   let isRecording = false;
   
-  // 核心邏輯：預設關閉畫面，純錄音
   let isVideoEnabled = false; 
   let wakeLock = null;
   let activeProcessingTasks = new Set();
+  let finalVideoUrls = "";
 
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   let mobileFacingMode = "user"; 
@@ -130,18 +200,22 @@
   const logBox = document.getElementById('systemLog');
   const recBadge = document.getElementById('recBadge');
 
-  // === 1. 頁面載入：立即要求權限並顯示預覽 (預設純錄音) ===
   window.onload = async () => {
-    document.getElementById('btnSwitchSource').innerText = isMobile ? "🔄 切換後鏡頭" : "💻 切換電腦螢幕";
+    updateSourceButtonUI();
     try {
       await acquireStream();
-      logMsg("authMsg", "✅ 設備授權成功！目前為【預設純語音模式】", "text-success");
+      logMsg("authMsg", "認證設備成功，目前為純語音模式", "text-success");
     } catch (err) {
-      logMsg("authMsg", "❌ 無法取得麥克風/鏡頭權限，請檢查瀏覽器設定！", "text-danger");
+      logMsg("authMsg", "請允許瀏覽器存取麥克風與相機權限", "text-danger");
     }
   };
 
-  // UI 切換邏輯
+  function updateSourceButtonUI() {
+    document.getElementById('text-source').innerText = isMobile ? "切換鏡頭方向" : "切換電腦畫面";
+    document.getElementById('icon-source').setAttribute('data-lucide', isMobile ? "smartphone" : "monitor");
+    lucide.createIcons();
+  }
+
   function switchStep(stepId) {
     document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
     document.getElementById(stepId).classList.add('active');
@@ -156,10 +230,9 @@
   function logMsg(elementId, msg, colorClass) {
     const el = document.getElementById(elementId);
     el.innerText = msg;
-    el.className = `text-center fw-bold mt-2 ${colorClass}`;
+    el.className = `text-center mt-2 fs-6 ${colorClass}`;
   }
 
-  // 共用 API 呼叫
   async function callGasAPI(payload) {
     try {
       const response = await fetch(GAS_URL, {
@@ -170,26 +243,24 @@
       });
       return await response.json();
     } catch (err) {
-      throw new Error("API 請求失敗：" + err.message);
+      throw new Error("網路請求失敗：" + err.message);
     }
   }
 
-  // === 2. 登入與驗證邏輯 ===
+  // === 登入與驗證 ===
   async function sendCode() {
     const email = document.getElementById('authEmail').value;
-    if (!email) return alert("請輸入 Email！");
-    
+    if (!email) return alert("請輸入信箱");
     document.getElementById('btnSendCode').disabled = true;
-    logMsg("authMsg", "⏳ 驗證碼發送中，請稍候...", "text-primary");
-    
+    logMsg("authMsg", "驗證碼發送中...", "text-muted");
     try {
       const res = await callGasAPI({ action: "sendCode", email: email });
       if (res.status === 'success') {
         document.getElementById('codeGroup').style.display = 'block';
-        logMsg("authMsg", "✅ " + res.data, "text-success");
+        logMsg("authMsg", "已發送至信箱", "text-success");
       } else throw new Error(res.message);
     } catch (err) {
-      logMsg("authMsg", "❌ 發送失敗: " + err.message, "text-danger");
+      logMsg("authMsg", "發送失敗", "text-danger");
       document.getElementById('btnSendCode').disabled = false;
     }
   }
@@ -197,19 +268,17 @@
   async function verifyCode() {
     const email = document.getElementById('authEmail').value;
     const code = document.getElementById('authCode').value;
-    if (!code) return alert("請輸入驗證碼！");
-    
+    if (!code) return alert("請輸入驗證碼");
     document.getElementById('btnVerify').disabled = true;
-    logMsg("authMsg", "⏳ 驗證中...", "text-primary");
-    
+    logMsg("authMsg", "驗證中...", "text-muted");
     try {
       const res = await callGasAPI({ action: "verifyCode", email: email, code: code });
       if (res.status === 'success') {
-        loggedInEmail = email; // 儲存 Email 供後續寫入
-        switchStep('step-setup'); // 進入設定步驟
+        loggedInEmail = email; 
+        switchStep('step-setup'); 
       } else throw new Error(res.message);
     } catch (err) {
-      logMsg("authMsg", "❌ 驗證失敗: " + err.message, "text-danger");
+      logMsg("authMsg", "驗證失敗: 代碼錯誤", "text-danger");
       document.getElementById('btnVerify').disabled = false;
     }
   }
@@ -221,11 +290,8 @@
   function releaseWakeLock() {
     if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; });
   }
-  document.addEventListener('visibilitychange', async () => {
-    if (wakeLock !== null && document.visibilityState === 'visible' && isRecording) await requestWakeLock(); 
-  });
 
-  // === 獲取串流引擎 ===
+  // === 獲取串流 ===
   async function acquireStream() {
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
     const constraints = { audio: true };
@@ -241,9 +307,8 @@
           currentStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
           currentStream.getVideoTracks()[0].onended = () => {
             if (isRecording) {
-              log("⚠️ 螢幕分享中斷，切回視訊鏡頭...");
+              log("畫面分享中斷，切回視訊鏡頭");
               desktopSource = "camera";
-              document.getElementById('btnSwitchSource').innerText = "💻 切換電腦螢幕";
               acquireStream().then(() => { if (isRecording) startChunkRecording(); });
             }
           };
@@ -253,7 +318,7 @@
       mediaPlayer.muted = true; 
       
       const videoTrack = currentStream.getVideoTracks()[0];
-      if (videoTrack) videoTrack.enabled = isVideoEnabled; // 預設為 false
+      if (videoTrack) videoTrack.enabled = isVideoEnabled; 
     } catch (err) {
       throw err;
     }
@@ -262,27 +327,22 @@
   async function switchSourceAction() {
     const wasRecording = isRecording;
     if (wasRecording && mediaRecorder && mediaRecorder.state === "recording") {
-      log("🔄 切換畫面中，切割當前檔案...");
+      log("切換畫面中...");
       mediaRecorder.stop(); 
       clearTimeout(chunkInterval);
     }
 
-    if (isMobile) {
-      mobileFacingMode = (mobileFacingMode === "user") ? "environment" : "user";
-      document.getElementById('btnSwitchSource').innerText = (mobileFacingMode === "user") ? "🔄 切換後鏡頭" : "🔄 切換前鏡頭";
-    } else {
-      desktopSource = (desktopSource === "camera") ? "screen" : "camera";
-      document.getElementById('btnSwitchSource').innerText = (desktopSource === "camera") ? "💻 切換電腦螢幕" : "📹 切換視訊鏡頭";
-    }
+    if (isMobile) mobileFacingMode = (mobileFacingMode === "user") ? "environment" : "user";
+    else desktopSource = (desktopSource === "camera") ? "screen" : "camera";
 
     try {
       await acquireStream();
       if (wasRecording) {
-        log("✅ 畫面切換完成，無縫繼續錄製...");
+        log("畫面切換完成，繼續錄製");
         startChunkRecording();
       }
     } catch (e) {
-      log("❌ 切換失敗，請確認權限。");
+      log("切換失敗，請確認權限");
     }
   }
 
@@ -292,96 +352,84 @@
       if (videoTrack) {
         isVideoEnabled = !isVideoEnabled;
         videoTrack.enabled = isVideoEnabled;
-        const btn = document.getElementById('btnToggleVideo');
+        const textEl = document.getElementById('text-video');
+        const iconEl = document.getElementById('icon-video');
+        
         if (isVideoEnabled) {
-          btn.innerText = "🙈 關閉畫面 (僅錄音)";
-          btn.classList.replace('btn-outline-secondary', 'btn-secondary');
-          btn.classList.add('text-white');
+          textEl.innerText = "關閉畫面 (純錄音)";
+          iconEl.setAttribute('data-lucide', 'eye-off');
         } else {
-          btn.innerText = "👀 開啟預覽畫面";
-          btn.classList.replace('btn-secondary', 'btn-outline-secondary');
-          btn.classList.remove('text-white');
+          textEl.innerText = "開啟畫面預覽";
+          iconEl.setAttribute('data-lucide', 'eye');
         }
+        lucide.createIcons();
       }
     }
   }
 
-  // === 3. 啟動會議 (錄製開始) ===
+  // === 啟動與操作 ===
   async function startMeeting() {
     const company = document.getElementById('setupCompany').value;
     const attendees = document.getElementById('setupAttendees').value;
-    
-    if (!company || !attendees) return alert("請填寫單位與與會人員名單！");
+    if (!company || !attendees) return alert("請填寫必要資訊");
 
     document.getElementById('btnStartSetup').disabled = true;
-    document.getElementById('btnStartSetup').innerText = "⏳ 雲端連線中...";
+    document.getElementById('btnStartSetup').innerHTML = `<i data-lucide="loader" class="pulse-dot" style="background:none;"></i> 連線中...`;
+    lucide.createIcons();
 
     try {
-      // 呼叫後端建立列，寫入 A, B, C, D, E
-      const res = await callGasAPI({ 
-        action: "initMeeting", 
-        email: loggedInEmail,
-        company: company,
-        attendees: attendees
-      });
-      
+      const res = await callGasAPI({ action: "initMeeting", email: loggedInEmail, company: company, attendees: attendees });
       if (res.status === 'success') {
         meetingData = res.data;
-        switchStep('step-recording'); // 切換到錄製介面
+        switchStep('step-recording'); 
         
         if (!currentStream) await acquireStream();
         
         if (currentStream && currentStream.getAudioTracks().length > 0) {
           isRecording = true;
           chunkIndex = 1;
-          recBadge.style.display = 'block';
+          recBadge.style.display = 'flex';
           
           await requestWakeLock(); 
-          log("▶️ 錄製正式開始！系統將每分鐘進行雙軌並行傳輸。");
+          log("系統啟動：每分鐘執行雙軌並行傳輸");
           startChunkRecording();
-        } else {
-          throw new Error("無法偵測到麥克風音軌。");
         }
-      } else {
-        throw new Error(res.message);
-      }
+      } else throw new Error(res.message);
     } catch (err) {
-      alert("❌ 啟動失敗：" + err.message);
-      document.getElementById('btnStartSetup').disabled = false;
-      document.getElementById('btnStartSetup').innerText = "🚀 啟動錄製與 AI 辨識";
+      alert("啟動失敗：" + err.message);
+      const btn = document.getElementById('btnStartSetup');
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="play-circle" style="width:20px;"></i> 建立會議並準備錄製`;
+      lucide.createIcons();
     }
   }
 
-  // 暫停與繼續
   function pauseMeeting() {
     if (mediaRecorder && mediaRecorder.state === "recording") {
-      log("⏸️ 錄製暫停。切割並上傳當前檔案...");
+      log("錄製暫停");
       mediaRecorder.stop(); 
       clearTimeout(chunkInterval);
-      
       document.getElementById('btnPause').style.display = 'none';
-      document.getElementById('btnResume').style.display = 'inline-block';
-      recBadge.style.background = "rgba(245, 158, 11, 0.9)";
-      recBadge.innerText = "PAUSE ⏸️";
+      document.getElementById('btnResume').style.display = 'flex';
+      recBadge.style.background = "#f59e0b";
+      recBadge.querySelector('span').innerText = "PAUSED";
     }
   }
 
   function resumeMeeting() {
-    log("▶️ 錄製恢復...");
+    log("錄製恢復");
     if (currentStream) {
       startChunkRecording(); 
       document.getElementById('btnResume').style.display = 'none';
-      document.getElementById('btnPause').style.display = 'inline-block';
-      recBadge.style.background = "rgba(239, 68, 68, 0.9)";
-      recBadge.innerText = "REC 🔴";
+      document.getElementById('btnPause').style.display = 'flex';
+      recBadge.style.background = "rgba(220, 38, 38, 0.9)";
+      recBadge.querySelector('span').innerText = "REC";
     }
   }
 
-  // 切割引擎
   function startChunkRecording() {
     if (!isRecording || !currentStream) return;
     let recordedChunks = [];
-    
     const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
     mediaRecorder = new MediaRecorder(currentStream, { mimeType: mimeType });
     
@@ -397,73 +445,53 @@
 
     try {
       mediaRecorder.start();
-      chunkInterval = setTimeout(() => {
-        if (mediaRecorder.state === "recording") mediaRecorder.stop();
-      }, 60000); 
-    } catch (err) {
-      log("❌ 錄影引擎啟動失敗：" + err.message);
-    }
+      chunkInterval = setTimeout(() => { if (mediaRecorder.state === "recording") mediaRecorder.stop(); }, 60000); 
+    } catch (err) {}
   }
 
-  // === 4. 雙軌並行與任務追蹤鎖 ===
   function processAndUploadChunk(blob, mimeType, currentIndex) {
-    log(`⏳ 第 ${currentIndex} 分鐘切片：【雙軌同步】雲端建檔與AI辨識啟動...`);
-    
+    log(`> 處理區段 ${currentIndex}：並行傳輸中...`);
     const taskPromise = new Promise((resolve) => {
       const reader = new FileReader();
       reader.readAsDataURL(blob);
       reader.onloadend = async () => {
         const base64Data = reader.result.split(',')[1];
         
-        // 軌道一：雲端建檔 (G欄)
-        const p1 = callGasAPI({
-          action: "saveDrive", base64Data: base64Data, mimeType: mimeType, folderId: meetingData.folderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex
-        }).then(res => {
-          if(res.status === 'success') log(`📁 軌道一 [第${currentIndex}分鐘]：建檔成功`);
-          else log(`❌ 建檔失敗: ` + res.message);
-        }).catch(err => log(`❌ 雲端錯誤: ` + err.message));
-
-        // 軌道二：AI 辨識 (H欄)
-        const p2 = callGasAPI({
-          action: "recognizeAI", base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex
-        }).then(res => {
-          if(res.status === 'success') log(`🧠 軌道二 [第${currentIndex}分鐘]：AI辨識寫入成功`);
-          else log(`❌ AI辨識失敗: ` + res.message);
-        }).catch(err => log(`❌ AI錯誤: ` + err.message));
+        const p1 = callGasAPI({ action: "saveDrive", base64Data: base64Data, mimeType: mimeType, folderId: meetingData.folderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
+        const p2 = callGasAPI({ action: "recognizeAI", base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         
         await Promise.all([p1, p2]);
-        resolve(); // 兩個軌道都完成，任務解鎖
+        log(`- 區段 ${currentIndex} 寫入完成`);
+        resolve();
       };
     });
-
     activeProcessingTasks.add(taskPromise);
     taskPromise.then(() => activeProcessingTasks.delete(taskPromise));
   }
 
-  // === 5. 結束與嚴格等待寫入 ===
+  // === 結束與產出 ===
   async function stopMeeting() {
     isRecording = false; 
     clearTimeout(chunkInterval);
     recBadge.style.display = 'none';
     releaseWakeLock(); 
     
-    document.getElementById('btnStop').disabled = true;
-    document.getElementById('btnStop').innerText = "⏳ 等待資料寫入中...";
+    const btnStop = document.getElementById('btnStop');
+    btnStop.disabled = true;
+    btnStop.innerHTML = `<i data-lucide="loader" style="width:18px;"></i> 統整中...`;
+    lucide.createIcons();
+
     document.getElementById('btnPause').style.display = 'none';
     document.getElementById('btnResume').style.display = 'none';
     document.getElementById('btnSwitchSource').style.display = 'none';
     document.getElementById('btnToggleVideo').style.display = 'none';
 
-    log("⏹️ 錄影結束，正在提取最後一段不到一分鐘的切片...");
+    log("提取最終區段資料...");
 
-    // 確保最後一個切片進入 activeProcessingTasks
     const onStopPromise = new Promise(resolve => {
       if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
         const originalOnStop = mediaRecorder.onstop;
-        mediaRecorder.onstop = (e) => {
-          if(originalOnStop) originalOnStop(e);
-          resolve();
-        };
+        mediaRecorder.onstop = (e) => { if(originalOnStop) originalOnStop(e); resolve(); };
         mediaRecorder.stop(); 
       } else resolve();
     });
@@ -471,36 +499,91 @@
     await onStopPromise;
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
 
-    // 🏆 嚴格鎖定：等待雙軌 100% 寫完
     if (activeProcessingTasks.size > 0) {
-      log(`⏳ 系統嚴格鎖定中：等待剩餘 ${activeProcessingTasks.size} 個辨識/建檔任務完全寫入試算表...`);
+      log(`等待 ${activeProcessingTasks.size} 筆背景任務完成寫入...`);
       while(activeProcessingTasks.size > 0) {
         await Promise.all(Array.from(activeProcessingTasks));
       }
     }
 
-    log("✅ 所有切片資料已 100% 同步寫入試算表！");
-    log("🧠 正在將狀態變更為「錄製完成」，並根據所有逐字稿產出總結...");
+    log("呼叫 AI 進行總結...");
     
     try {
-      const res = await callGasAPI({ 
-        action: "finalizeMeeting", 
-        rowIndex: meetingData.rowIndex,
-        email: loggedInEmail
-      });
-      
+      const res = await callGasAPI({ action: "finalizeMeeting", rowIndex: meetingData.rowIndex, email: loggedInEmail });
       if (res.status === 'success') {
-        log("🎉 會議紀錄統整完畢！");
-        switchStep('step-result'); // 隱藏錄製區，顯示結果區
-        document.getElementById('finalSummary').innerText = res.data.summary;
+        switchStep('step-result'); 
+        
+        // 填入資料
+        document.getElementById('finalSummary').value = res.data.summary;
         document.getElementById('fullDetails').innerText = res.data.details;
+        
+        // 處理 URL 顯示
+        finalVideoUrls = res.data.videoUrls || "尚未產生錄影檔案";
+        document.getElementById('videoUrlText').innerText = finalVideoUrls.split(',')[0]; // 只顯示第一段作代表，複製時複製全部
+        
       } else {
-        log("❌ 最終總結產出失敗: " + res.message);
-        document.getElementById('btnStop').innerText = "❌ 總結失敗";
+        log("總結失敗: " + res.message);
+        btnStop.innerHTML = "總結失敗";
       }
     } catch(err) {
-      log("❌ 請求最終總結異常: " + err.message);
+      log("異常: " + err.message);
     }
+  }
+
+  // === 擴充操作：儲存、匯出、複製 ===
+  
+  function copyVideoUrl() {
+    navigator.clipboard.writeText(finalVideoUrls).then(() => {
+      showFeedback("已複製影片網址");
+    });
+  }
+
+  async function saveSummary() {
+    const btn = document.getElementById('btnSaveSummary');
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader" style="width:16px;"></i> 儲存中...`;
+    lucide.createIcons();
+    
+    const newSummary = document.getElementById('finalSummary').value;
+    try {
+      await callGasAPI({ action: "updateSummary", rowIndex: meetingData.rowIndex, newSummary: newSummary });
+      showFeedback("變更已成功同步至資料庫");
+    } catch(err) {
+      showFeedback("儲存失敗", true);
+    }
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="save" style="width:16px;"></i> 儲存變更至資料庫`;
+    lucide.createIcons();
+  }
+
+  async function exportToDoc() {
+    const btn = document.getElementById('btnExportDoc');
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader" style="width:16px;"></i> 建立中...`;
+    lucide.createIcons();
+    
+    const summary = document.getElementById('finalSummary').value;
+    const details = document.getElementById('fullDetails').innerText;
+    
+    try {
+      const res = await callGasAPI({ action: "createDoc", meetingName: meetingData.meetingName, summary: summary, details: details });
+      if(res.status === 'success') {
+        showFeedback("文件已建立！");
+        window.open(res.data, '_blank'); // 另開視窗前往 Doc
+      }
+    } catch(err) {
+      showFeedback("建立失敗", true);
+    }
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="file-text" style="width:16px;"></i> 建立 Google 文件`;
+    lucide.createIcons();
+  }
+
+  function showFeedback(msg, isError = false) {
+    const el = document.getElementById('actionFeedback');
+    el.innerText = msg;
+    el.className = `text-end mt-2 fs-6 ${isError ? 'text-danger' : 'text-success'}`;
+    setTimeout(() => { el.innerText = ""; }, 3000);
   }
 </script>
 
