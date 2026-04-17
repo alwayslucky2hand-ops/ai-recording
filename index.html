@@ -28,7 +28,6 @@
     .video-container { position: relative; width: 100%; max-height: 450px; background: #000; border-radius: 12px; margin-bottom: 24px; overflow: hidden; }
     video { width: 100%; height: 100%; object-fit: contain; }
     
-    /* 錄影紅點徽章 (純CSS無Emoji) */
     .status-badge { position: absolute; top: 16px; right: 16px; background: rgba(220, 38, 38, 0.9); color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 13px; display: none; z-index: 10; letter-spacing: 0.5px; align-items: center; gap: 6px; }
     .pulse-dot { width: 8px; height: 8px; background-color: white; border-radius: 50%; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
@@ -85,7 +84,7 @@
     <video id="mediaPlayer" autoplay muted playsinline></video>
     
     <div class="controls-overlay" id="playerControls">
-      <button class="control-btn" id="btnSwitchSource" onclick="switchSourceAction()" title="切換攝影機/螢幕">
+      <button class="control-btn" id="btnSwitchSource" onclick="switchSourceAction()" title="切換鏡頭/螢幕">
         <i data-lucide="refresh-ccw" id="icon-source"></i>
       </button>
       <button class="control-btn" id="btnToggleVideo" onclick="toggleVideo()" title="開啟/關閉畫面">
@@ -180,7 +179,6 @@
 <div class="text-center mt-5 text-muted" style="font-size: 13px;">All Copyright recieved by ... GrowthX｜微企AI學院</div>
 
 <script>
-  // 啟動 Lucide 圖示渲染
   lucide.createIcons();
 
   // ==========================================
@@ -194,7 +192,9 @@
   let chunkInterval;
   let chunkIndex = 1;
   let meetingData = { folderId: '', rowIndex: 0, meetingName: '' };
+  
   let isRecording = false;
+  let isPaused = false; // 🌟 新增：暫停狀態旗標，徹底防堵背景傳輸
   
   let isVideoEnabled = false; 
   let wakeLock = null;
@@ -210,7 +210,6 @@
   const recBadge = document.getElementById('recBadge');
   const videoContainer = document.getElementById('videoContainer');
 
-  // --- 懸浮控制列自動隱藏邏輯 ---
   let hideControlsTimeout;
   function wakeControls() {
     videoContainer.classList.add('active-controls');
@@ -222,9 +221,8 @@
   videoContainer.addEventListener('mousemove', wakeControls);
   videoContainer.addEventListener('click', wakeControls);
   videoContainer.addEventListener('touchstart', wakeControls);
-  wakeControls(); // 初始喚醒
+  wakeControls(); 
 
-  // --- 網頁載入初始化 ---
   window.onload = async () => {
     document.getElementById('icon-source').setAttribute('data-lucide', isMobile ? "smartphone" : "monitor");
     lucide.createIcons();
@@ -267,7 +265,6 @@
     }
   }
 
-  // === 登入與驗證 ===
   async function sendCode() {
     const email = document.getElementById('authEmail').value;
     if (!email) return alert("請輸入信箱");
@@ -277,7 +274,7 @@
       const res = await callGasAPI({ action: "sendCode", email: email });
       if (res.status === 'success') {
         document.getElementById('codeGroup').style.display = 'block';
-        logMsg("authMsg", "[成功] 驗證碼已發送至信箱", "text-success");
+        logMsg("authMsg", "[成功] 已發送至信箱", "text-success");
       } else throw new Error(res.message);
     } catch (err) {
       logMsg("authMsg", "[錯誤] 發送失敗", "text-danger");
@@ -303,7 +300,6 @@
     }
   }
 
-  // === 防休眠 ===
   async function requestWakeLock() {
     try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
   }
@@ -311,7 +307,6 @@
     if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; });
   }
 
-  // === 獲取串流 (強制 480p 效能傳輸) ===
   async function acquireStream() {
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
     const constraints = { audio: true };
@@ -331,7 +326,7 @@
               desktopSource = "camera";
               document.getElementById('icon-source').setAttribute('data-lucide', 'monitor');
               lucide.createIcons();
-              acquireStream().then(() => { if (isRecording) startChunkRecording(); });
+              acquireStream().then(() => { if (isRecording && !isPaused) startChunkRecording(); });
             }
           };
         }
@@ -359,12 +354,13 @@
 
     try {
       await acquireStream();
-      if (wasRecording) {
+      // 如果原本在錄製且非暫停狀態，才繼續錄製
+      if (wasRecording && !isPaused) {
         log("[成功] 畫面切換完成，繼續錄製");
         startChunkRecording();
       }
     } catch (e) {
-      log("[錯誤] 切換失敗，請確認設備權限");
+      log("[錯誤] 切換失敗，請確認權限");
     }
   }
 
@@ -387,7 +383,6 @@
     }
   }
 
-  // === 啟動與操作 ===
   async function startMeeting() {
     const company = document.getElementById('setupCompany').value;
     const attendees = document.getElementById('setupAttendees').value;
@@ -403,7 +398,6 @@
         meetingData = res.data;
         switchStep('step-recording'); 
         
-        // 顯示懸浮列上的錄製控制項
         document.getElementById('recordDivider').style.display = 'block';
         document.getElementById('btnPause').style.display = 'flex';
         document.getElementById('btnStop').style.display = 'flex';
@@ -412,6 +406,7 @@
         
         if (currentStream && currentStream.getAudioTracks().length > 0) {
           isRecording = true;
+          isPaused = false; // 初始非暫停
           chunkIndex = 1;
           recBadge.style.display = 'flex';
           
@@ -429,11 +424,14 @@
     }
   }
 
+  // 🌟 嚴格控制暫停：切斷資料傳輸與迴圈
   function pauseMeeting() {
     if (mediaRecorder && mediaRecorder.state === "recording") {
-      log("[控制] 錄製暫停，傳輸當前切片");
-      mediaRecorder.stop(); 
+      isPaused = true; // 設定為暫停狀態
+      log("[控制] 錄製暫停。進行最後一段切片傳輸後，將徹底停止背景傳輸。");
+      mediaRecorder.stop(); // 觸發 onstop 將當前片段送出
       clearTimeout(chunkInterval);
+      
       document.getElementById('btnPause').style.display = 'none';
       document.getElementById('btnResume').style.display = 'flex';
       recBadge.style.background = "#f59e0b";
@@ -442,9 +440,11 @@
   }
 
   function resumeMeeting() {
-    log("[控制] 錄製恢復");
+    log("[控制] 錄製恢復，重新啟動雙軌傳輸...");
     if (currentStream) {
-      startChunkRecording(); 
+      isPaused = false; // 解除暫停狀態
+      startChunkRecording(); // 手動重啟錄製循環
+      
       document.getElementById('btnResume').style.display = 'none';
       document.getElementById('btnPause').style.display = 'flex';
       recBadge.style.background = "rgba(220, 38, 38, 0.9)";
@@ -452,9 +452,8 @@
     }
   }
 
-  // === 真正雙軌同步並行 ===
   function startChunkRecording() {
-    if (!isRecording || !currentStream) return;
+    if (!isRecording || !currentStream || isPaused) return; // 🌟 若為暫停狀態，徹底阻擋錄影啟動
     let recordedChunks = [];
     const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
     mediaRecorder = new MediaRecorder(currentStream, { mimeType: mimeType });
@@ -463,11 +462,11 @@
     mediaRecorder.onstop = () => {
       if (recordedChunks.length > 0) {
         const blob = new Blob(recordedChunks, { type: mimeType });
-        // 嚴格保留此雙軌處理函式調用
         processAndUploadChunk(blob, mimeType, chunkIndex);
         chunkIndex++;
       }
-      if (isRecording) startChunkRecording(); 
+      // 🌟 嚴格確認不是處於暫停狀態，才啟動下一分鐘循環
+      if (isRecording && !isPaused) startChunkRecording(); 
     };
 
     try {
@@ -484,7 +483,6 @@
       reader.onloadend = async () => {
         const base64Data = reader.result.split(',')[1];
         
-        // 軌道一與軌道二：完完全全同時進行
         const p1 = callGasAPI({ action: "saveDrive", base64Data: base64Data, mimeType: mimeType, folderId: meetingData.folderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         const p2 = callGasAPI({ action: "recognizeAI", base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         
@@ -493,7 +491,6 @@
         resolve();
       };
     });
-    // 嚴格保留任務追蹤鎖
     activeProcessingTasks.add(taskPromise);
     taskPromise.then(() => activeProcessingTasks.delete(taskPromise));
   }
@@ -501,11 +498,11 @@
   // === 結束與產出 ===
   async function stopMeeting() {
     isRecording = false; 
+    isPaused = false;
     clearTimeout(chunkInterval);
     recBadge.style.display = 'none';
     releaseWakeLock(); 
     
-    // 隱藏影片控制列
     document.getElementById('playerControls').style.display = 'none';
     log("[系統] 正在提取最終區段資料...");
 
@@ -520,9 +517,8 @@
     await onStopPromise;
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
 
-    // 嚴格鎖定：確保所有背景任務寫完
     if (activeProcessingTasks.size > 0) {
-      log(`[鎖定] 等待 ${activeProcessingTasks.size} 筆背景雙軌任務完成寫入...`);
+      log(`[鎖定] 嚴格等待 ${activeProcessingTasks.size} 筆背景任務完成寫入...`);
       while(activeProcessingTasks.size > 0) {
         await Promise.all(Array.from(activeProcessingTasks));
       }
@@ -537,7 +533,6 @@
         
         finalVideoUrls = res.data.videoUrls || "無雲端影音檔案紀錄";
         
-        // 將公開影片網址自動附加在編輯器最後，確保建立 Doc 時也能一併帶上
         const finalContent = res.data.summary + "\n\n【公開雲端影音檔案連結】\n" + finalVideoUrls;
         document.getElementById('finalSummary').value = finalContent;
         document.getElementById('fullDetails').innerText = res.data.details;
@@ -586,15 +581,11 @@
     const details = document.getElementById('fullDetails').innerText;
     
     try {
-      // 呼叫建立文件 API，並將該次會議資料夾 ID 傳入做歸檔
       const res = await callGasAPI({ action: "createDoc", meetingName: meetingData.meetingName, summary: summary, details: details, folderId: meetingData.folderId });
       if(res.status === 'success') {
         showFeedback("文件建立並歸檔完成！");
-        
-        // 顯示公開文件連結 UI
         document.getElementById('docLinkArea').style.display = 'block';
         document.getElementById('docUrlText').innerText = res.data;
-        
         window.open(res.data, '_blank'); 
       }
     } catch(err) {
