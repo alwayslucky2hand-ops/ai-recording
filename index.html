@@ -3,64 +3,113 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 商務行動錄製系統</title>
+  <title>AI 智能商務錄製系統</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
-    .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 800px; margin: auto; padding: 30px; background: white;}
-    video { width: 100%; max-height: 400px; background: black; border-radius: 8px; margin-bottom: 20px; object-fit: contain;}
-    .status-badge { position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.8); color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold; display: none; z-index: 10; }
-    .log-box { height: 220px; overflow-y: auto; background: #2b2b2b; color: #4af626; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.5;}
-    .btn-custom { font-weight: bold; padding: 10px 20px; }
+    :root { --primary-color: #2563eb; --surface-color: #ffffff; --bg-color: #f8fafc; }
+    body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; color: #1e293b; }
+    
+    /* 2026 現代卡片設計：大圓角、柔和陰影 */
+    .card-modern { background: var(--surface-color); border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); max-width: 800px; margin: auto; padding: 35px; border: none; transition: all 0.3s ease; }
+    
+    /* UI 漸進式揭露區塊 */
+    .step-section { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
+    .step-section.active { display: block; opacity: 1; }
+    
+    /* 影片與狀態徽章 */
+    .video-container { position: relative; width: 100%; max-height: 450px; background: #0f172a; border-radius: 16px; margin-bottom: 24px; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+    video { width: 100%; height: 100%; object-fit: contain; }
+    .status-badge { position: absolute; top: 16px; right: 16px; background: rgba(239, 68, 68, 0.9); color: white; padding: 6px 14px; border-radius: 8px; font-weight: 600; font-size: 14px; display: none; z-index: 10; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
+    
+    /* 無障礙大按鍵與輸入框 */
+    .form-control-lg { border-radius: 12px; border: 1px solid #cbd5e1; padding: 14px 20px; font-size: 16px; }
+    .form-control-lg:focus { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); border-color: var(--primary-color); }
+    .btn-custom { font-weight: 600; padding: 14px 24px; border-radius: 12px; font-size: 16px; transition: transform 0.1s, box-shadow 0.2s; }
+    .btn-custom:active { transform: scale(0.98); }
+    
+    /* AI 透明度日誌區塊 */
+    .log-box { height: 200px; overflow-y: auto; background: #1e293b; color: #4ade80; padding: 20px; border-radius: 12px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; border: 1px solid #334155; }
+    
+    /* 總結區塊細節 */
+    summary { cursor: pointer; padding: 14px; background-color: #f1f5f9; border-radius: 12px; font-weight: 600; color: #475569; border: 1px solid #e2e8f0; }
+    summary:hover { background-color: #e2e8f0; }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <h2 class="text-center mb-4 text-primary fw-bold">🎙️ AI 商務行動錄製系統</h2>
+<div class="card-modern">
+  <h2 class="text-center mb-4 fw-bold" style="color: #0f172a;">✨ AI 智能商務錄製系統</h2>
   
-  <div class="mb-4">
-    <label class="form-label fw-bold">使用者 Email (作為建檔帳號名稱)：</label>
-    <input type="email" id="userEmail" class="form-control form-control-lg" placeholder="user@business.com">
-  </div>
-
-  <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">
-    <button class="btn btn-outline-secondary source-btn" id="btnSwitchSource" onclick="switchSourceAction()" disabled>🔄 讀取裝置中...</button>
-    <button class="btn btn-outline-secondary source-btn" id="btnToggleVideo" onclick="toggleVideo()" disabled>👀 開啟預覽畫面</button>
-  </div>
-
-  <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
-    <button class="btn btn-primary btn-custom" id="btnStart" onclick="startMeeting()" disabled>▶️ 開始錄製</button>
-    <button class="btn btn-warning btn-custom text-dark" id="btnPause" onclick="pauseMeeting()" style="display:none;">⏸️ 暫停錄製</button>
-    <button class="btn btn-success btn-custom" id="btnResume" onclick="resumeMeeting()" style="display:none;">▶️ 繼續錄製</button>
-    <button class="btn btn-danger btn-custom" id="btnStop" onclick="stopMeeting()" disabled>⏹️ 結束並產出總結</button>
-  </div>
-
-  <div class="position-relative">
+  <div class="video-container">
     <div id="recBadge" class="status-badge">REC 🔴</div>
     <video id="mediaPlayer" autoplay muted playsinline></video>
   </div>
 
-  <h5 class="fw-bold">系統狀態監控 (雙軌完全同步並行中)：</h5>
-  <div id="systemLog" class="log-box mb-4">正在請求設備權限...<br></div>
+  <div id="step-auth" class="step-section active">
+    <div class="mb-3">
+      <label class="form-label fw-bold">1. 請輸入 Email 登入：</label>
+      <div class="input-group">
+        <input type="email" id="authEmail" class="form-control form-control-lg" placeholder="name@company.com">
+        <button class="btn btn-outline-primary px-4 fw-bold" id="btnSendCode" onclick="sendCode()">發送驗證碼</button>
+      </div>
+    </div>
+    <div class="mb-4" id="codeGroup" style="display:none;">
+      <label class="form-label fw-bold text-primary">輸入收到的驗證碼：</label>
+      <input type="text" id="authCode" class="form-control form-control-lg mb-3" placeholder="6位數驗證碼">
+      <button class="btn btn-primary w-100 btn-custom" id="btnVerify" onclick="verifyCode()">驗證並登入</button>
+    </div>
+    <div id="authMsg" class="text-center fw-bold mt-2"></div>
+  </div>
+
+  <div id="step-setup" class="step-section">
+    <h5 class="fw-bold mb-3 text-primary">2. 設定本次會議基本資訊</h5>
+    <div class="mb-3">
+      <label class="form-label fw-bold">單位 (公司-部門名稱)：</label>
+      <input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：AI 科技 - 研發部">
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-bold">與會人員名單：</label>
+      <textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="例如：王小明、李大華..."></textarea>
+    </div>
+    <button class="btn btn-primary w-100 btn-custom fs-5" id="btnStartSetup" onclick="startMeeting()">🚀 啟動錄製與 AI 辨識</button>
+  </div>
+
+  <div id="step-recording" class="step-section">
+    <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
+      <button class="btn btn-outline-secondary fw-bold" id="btnSwitchSource" onclick="switchSourceAction()">🔄 切換鏡頭</button>
+      <button class="btn btn-outline-secondary fw-bold" id="btnToggleVideo" onclick="toggleVideo()">👀 開啟預覽畫面</button>
+    </div>
+
+    <div class="d-flex justify-content-center flex-wrap gap-3 mb-4">
+      <button class="btn btn-warning btn-custom text-dark" id="btnPause" onclick="pauseMeeting()">⏸️ 暫停錄製</button>
+      <button class="btn btn-success btn-custom" id="btnResume" onclick="resumeMeeting()" style="display:none;">▶️ 繼續錄製</button>
+      <button class="btn btn-danger btn-custom" id="btnStop" onclick="stopMeeting()">⏹️ 結束並產出總結</button>
+    </div>
+
+    <h6 class="fw-bold text-secondary">系統狀態監控 (雙軌完全同步並行中)：</h6>
+    <div id="systemLog" class="log-box mb-2">系統啟動中...<br></div>
+  </div>
   
-  <div id="finalSummaryArea" class="mt-4" style="display:none;">
+  <div id="step-result" class="step-section mt-4">
     <h4 class="fw-bold text-success mb-3">📝 專業會議總結：</h4>
-    <div id="finalSummary" class="p-3 border border-success rounded bg-light" style="white-space: pre-wrap; font-size: 16px; line-height: 1.6;"></div>
+    <div id="finalSummary" class="p-4 border border-success rounded bg-white shadow-sm" style="white-space: pre-wrap; font-size: 16px; line-height: 1.8;"></div>
     
     <details class="mt-4">
-      <summary class="fw-bold text-secondary text-center cursor-pointer p-2 border rounded bg-light">📄 點擊展開：完整畫面描述與逐字稿</summary>
-      <div id="fullDetails" class="p-3 mt-2 border rounded bg-white text-dark" style="white-space: pre-wrap; font-size: 14px;"></div>
+      <summary>📄 點擊展開：完整畫面描述與逐字稿</summary>
+      <div id="fullDetails" class="p-3 mt-2 border rounded bg-white text-dark" style="white-space: pre-wrap; font-size: 14px; line-height: 1.6;"></div>
     </details>
   </div>
+
 </div>
 
 <script>
   // ==========================================
-  // ⚠️ 請填入你的 GAS URL
+  // GAS API URL (已嚴格綁定)
   // ==========================================
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwOQx2kVxAJSMoC6Mpd-k7OtwQWD_4RrAofhJu00XYnHn5RCi3VfLbCoSnqcP3LhTE/exec";
 
+  // 全域變數
+  let loggedInEmail = "";
   let currentStream = null;
   let mediaRecorder = null;
   let chunkInterval;
@@ -68,7 +117,7 @@
   let meetingData = { folderId: '', rowIndex: 0 };
   let isRecording = false;
   
-  // 預設純語音模式
+  // 核心邏輯：預設關閉畫面，純錄音
   let isVideoEnabled = false; 
   let wakeLock = null;
   let activeProcessingTasks = new Set();
@@ -81,19 +130,22 @@
   const logBox = document.getElementById('systemLog');
   const recBadge = document.getElementById('recBadge');
 
-  // === 網頁載入時：立即取得權限並預設關閉畫面 ===
+  // === 1. 頁面載入：立即要求權限並顯示預覽 (預設純錄音) ===
   window.onload = async () => {
     document.getElementById('btnSwitchSource').innerText = isMobile ? "🔄 切換後鏡頭" : "💻 切換電腦螢幕";
     try {
       await acquireStream();
-      document.getElementById('btnStart').disabled = false;
-      document.getElementById('btnSwitchSource').disabled = false;
-      document.getElementById('btnToggleVideo').disabled = false;
-      log("✅ 設備授權成功！目前為【預設純語音模式】，若需錄製畫面請點擊「開啟預覽畫面」。");
+      logMsg("authMsg", "✅ 設備授權成功！目前為【預設純語音模式】", "text-success");
     } catch (err) {
-      log("❌ 無法取得麥克風/鏡頭權限，請檢查瀏覽器設定！");
+      logMsg("authMsg", "❌ 無法取得麥克風/鏡頭權限，請檢查瀏覽器設定！", "text-danger");
     }
   };
+
+  // UI 切換邏輯
+  function switchStep(stepId) {
+    document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
+    document.getElementById(stepId).classList.add('active');
+  }
 
   function log(msg) {
     const time = new Date().toLocaleTimeString('zh-TW', { hour12: false });
@@ -101,17 +153,13 @@
     logBox.scrollTop = logBox.scrollHeight;
   }
 
-  // === 防休眠 ===
-  async function requestWakeLock() {
-    try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+  function logMsg(elementId, msg, colorClass) {
+    const el = document.getElementById(elementId);
+    el.innerText = msg;
+    el.className = `text-center fw-bold mt-2 ${colorClass}`;
   }
-  function releaseWakeLock() {
-    if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; });
-  }
-  document.addEventListener('visibilitychange', async () => {
-    if (wakeLock !== null && document.visibilityState === 'visible' && isRecording) await requestWakeLock(); 
-  });
 
+  // 共用 API 呼叫
   async function callGasAPI(payload) {
     try {
       const response = await fetch(GAS_URL, {
@@ -126,7 +174,58 @@
     }
   }
 
-  // === 獲取串流 (始終抓取影音，透過 enabled 控制畫面) ===
+  // === 2. 登入與驗證邏輯 ===
+  async function sendCode() {
+    const email = document.getElementById('authEmail').value;
+    if (!email) return alert("請輸入 Email！");
+    
+    document.getElementById('btnSendCode').disabled = true;
+    logMsg("authMsg", "⏳ 驗證碼發送中，請稍候...", "text-primary");
+    
+    try {
+      const res = await callGasAPI({ action: "sendCode", email: email });
+      if (res.status === 'success') {
+        document.getElementById('codeGroup').style.display = 'block';
+        logMsg("authMsg", "✅ " + res.data, "text-success");
+      } else throw new Error(res.message);
+    } catch (err) {
+      logMsg("authMsg", "❌ 發送失敗: " + err.message, "text-danger");
+      document.getElementById('btnSendCode').disabled = false;
+    }
+  }
+
+  async function verifyCode() {
+    const email = document.getElementById('authEmail').value;
+    const code = document.getElementById('authCode').value;
+    if (!code) return alert("請輸入驗證碼！");
+    
+    document.getElementById('btnVerify').disabled = true;
+    logMsg("authMsg", "⏳ 驗證中...", "text-primary");
+    
+    try {
+      const res = await callGasAPI({ action: "verifyCode", email: email, code: code });
+      if (res.status === 'success') {
+        loggedInEmail = email; // 儲存 Email 供後續寫入
+        switchStep('step-setup'); // 進入設定步驟
+      } else throw new Error(res.message);
+    } catch (err) {
+      logMsg("authMsg", "❌ 驗證失敗: " + err.message, "text-danger");
+      document.getElementById('btnVerify').disabled = false;
+    }
+  }
+
+  // === 防休眠 ===
+  async function requestWakeLock() {
+    try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+  }
+  function releaseWakeLock() {
+    if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; });
+  }
+  document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible' && isRecording) await requestWakeLock(); 
+  });
+
+  // === 獲取串流引擎 ===
   async function acquireStream() {
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
     const constraints = { audio: true };
@@ -153,9 +252,8 @@
       mediaPlayer.srcObject = currentStream;
       mediaPlayer.muted = true; 
       
-      // 確保至少有麥克風，影像軌道依 isVideoEnabled 決定
       const videoTrack = currentStream.getVideoTracks()[0];
-      if (videoTrack) videoTrack.enabled = isVideoEnabled;
+      if (videoTrack) videoTrack.enabled = isVideoEnabled; // 預設為 false
     } catch (err) {
       throw err;
     }
@@ -164,7 +262,7 @@
   async function switchSourceAction() {
     const wasRecording = isRecording;
     if (wasRecording && mediaRecorder && mediaRecorder.state === "recording") {
-      log("切換畫面中，正在切割當前檔案...");
+      log("🔄 切換畫面中，切割當前檔案...");
       mediaRecorder.stop(); 
       clearTimeout(chunkInterval);
     }
@@ -180,11 +278,11 @@
     try {
       await acquireStream();
       if (wasRecording) {
-        log("畫面切換完成，無縫繼續錄製新切片...");
+        log("✅ 畫面切換完成，無縫繼續錄製...");
         startChunkRecording();
       }
     } catch (e) {
-      log("切換失敗，請確認權限。");
+      log("❌ 切換失敗，請確認權限。");
     }
   }
 
@@ -197,42 +295,49 @@
         const btn = document.getElementById('btnToggleVideo');
         if (isVideoEnabled) {
           btn.innerText = "🙈 關閉畫面 (僅錄音)";
-          log("👀 已開啟畫面預覽。");
+          btn.classList.replace('btn-outline-secondary', 'btn-secondary');
+          btn.classList.add('text-white');
         } else {
           btn.innerText = "👀 開啟預覽畫面";
-          log("🙈 畫面已關閉，將繼續以純語音模式運作。");
+          btn.classList.replace('btn-secondary', 'btn-outline-secondary');
+          btn.classList.remove('text-white');
         }
       }
     }
   }
 
-  // === 啟動會議 ===
+  // === 3. 啟動會議 (錄製開始) ===
   async function startMeeting() {
-    const email = document.getElementById('userEmail').value;
-    if (!email) return alert("請輸入 Email！");
+    const company = document.getElementById('setupCompany').value;
+    const attendees = document.getElementById('setupAttendees').value;
+    
+    if (!company || !attendees) return alert("請填寫單位與與會人員名單！");
 
-    document.getElementById('btnStart').disabled = true;
-    log("正在向雲端請求初始化會議專案...");
+    document.getElementById('btnStartSetup').disabled = true;
+    document.getElementById('btnStartSetup').innerText = "⏳ 雲端連線中...";
 
     try {
-      const res = await callGasAPI({ action: "initMeeting", userEmail: email });
+      // 呼叫後端建立列，寫入 A, B, C, D, E
+      const res = await callGasAPI({ 
+        action: "initMeeting", 
+        email: loggedInEmail,
+        company: company,
+        attendees: attendees
+      });
+      
       if (res.status === 'success') {
         meetingData = res.data;
-        log(`✅ 初始化完成！已於試算表建立新列。`);
+        switchStep('step-recording'); // 切換到錄製介面
         
         if (!currentStream) await acquireStream();
         
         if (currentStream && currentStream.getAudioTracks().length > 0) {
-          document.getElementById('btnStop').disabled = false;
-          document.getElementById('btnPause').style.display = 'inline-block';
-          document.getElementById('btnStart').style.display = 'none';
-          
           isRecording = true;
           chunkIndex = 1;
           recBadge.style.display = 'block';
           
           await requestWakeLock(); 
-          log("▶️ 錄製開始！系統將每分鐘進行雙軌並行傳輸。");
+          log("▶️ 錄製正式開始！系統將每分鐘進行雙軌並行傳輸。");
           startChunkRecording();
         } else {
           throw new Error("無法偵測到麥克風音軌。");
@@ -241,21 +346,23 @@
         throw new Error(res.message);
       }
     } catch (err) {
-      log("❌ 啟動失敗：" + err.message);
-      document.getElementById('btnStart').disabled = false;
+      alert("❌ 啟動失敗：" + err.message);
+      document.getElementById('btnStartSetup').disabled = false;
+      document.getElementById('btnStartSetup').innerText = "🚀 啟動錄製與 AI 辨識";
     }
   }
 
+  // 暫停與繼續
   function pauseMeeting() {
     if (mediaRecorder && mediaRecorder.state === "recording") {
-      log("⏸️ 錄製已暫停。正在切割並上傳當前檔案...");
+      log("⏸️ 錄製暫停。切割並上傳當前檔案...");
       mediaRecorder.stop(); 
       clearTimeout(chunkInterval);
       
       document.getElementById('btnPause').style.display = 'none';
       document.getElementById('btnResume').style.display = 'inline-block';
-      recBadge.style.background = "rgba(255, 165, 0, 0.8)";
-      recBadge.innerText = "暫停⏸️";
+      recBadge.style.background = "rgba(245, 158, 11, 0.9)";
+      recBadge.innerText = "PAUSE ⏸️";
     }
   }
 
@@ -265,12 +372,12 @@
       startChunkRecording(); 
       document.getElementById('btnResume').style.display = 'none';
       document.getElementById('btnPause').style.display = 'inline-block';
-      recBadge.style.background = "rgba(255, 0, 0, 0.8)";
+      recBadge.style.background = "rgba(239, 68, 68, 0.9)";
       recBadge.innerText = "REC 🔴";
     }
   }
 
-  // === 錄影切割引擎 ===
+  // 切割引擎
   function startChunkRecording() {
     if (!isRecording || !currentStream) return;
     let recordedChunks = [];
@@ -285,9 +392,7 @@
         processAndUploadChunk(blob, mimeType, chunkIndex);
         chunkIndex++;
       }
-      if (isRecording) {
-        startChunkRecording(); 
-      }
+      if (isRecording) startChunkRecording(); 
     };
 
     try {
@@ -300,9 +405,9 @@
     }
   }
 
-  // === 雙軌並行與任務鎖 ===
+  // === 4. 雙軌並行與任務追蹤鎖 ===
   function processAndUploadChunk(blob, mimeType, currentIndex) {
-    log(`⏳ 第 ${currentIndex} 分鐘切片：【雙軌並行】雲端建檔與AI辨識啟動...`);
+    log(`⏳ 第 ${currentIndex} 分鐘切片：【雙軌同步】雲端建檔與AI辨識啟動...`);
     
     const taskPromise = new Promise((resolve) => {
       const reader = new FileReader();
@@ -310,24 +415,24 @@
       reader.onloadend = async () => {
         const base64Data = reader.result.split(',')[1];
         
-        // 軌道一：雲端建檔 (E欄)
+        // 軌道一：雲端建檔 (G欄)
         const p1 = callGasAPI({
           action: "saveDrive", base64Data: base64Data, mimeType: mimeType, folderId: meetingData.folderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex
         }).then(res => {
-          if(res.status === 'success') log(`📁 軌道一 [第${currentIndex}分鐘]：建檔成功 (E欄)`);
+          if(res.status === 'success') log(`📁 軌道一 [第${currentIndex}分鐘]：建檔成功`);
           else log(`❌ 建檔失敗: ` + res.message);
         }).catch(err => log(`❌ 雲端錯誤: ` + err.message));
 
-        // 軌道二：AI 辨識 (F欄)
+        // 軌道二：AI 辨識 (H欄)
         const p2 = callGasAPI({
           action: "recognizeAI", base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex
         }).then(res => {
-          if(res.status === 'success') log(`🧠 軌道二 [第${currentIndex}分鐘]：AI辨識寫入成功 (F欄)`);
+          if(res.status === 'success') log(`🧠 軌道二 [第${currentIndex}分鐘]：AI辨識寫入成功`);
           else log(`❌ AI辨識失敗: ` + res.message);
         }).catch(err => log(`❌ AI錯誤: ` + err.message));
         
         await Promise.all([p1, p2]);
-        resolve();
+        resolve(); // 兩個軌道都完成，任務解鎖
       };
     });
 
@@ -335,7 +440,7 @@
     taskPromise.then(() => activeProcessingTasks.delete(taskPromise));
   }
 
-  // === 結束並嚴格等待寫入 ===
+  // === 5. 結束與嚴格等待寫入 ===
   async function stopMeeting() {
     isRecording = false; 
     clearTimeout(chunkInterval);
@@ -343,12 +448,15 @@
     releaseWakeLock(); 
     
     document.getElementById('btnStop').disabled = true;
+    document.getElementById('btnStop').innerText = "⏳ 等待資料寫入中...";
     document.getElementById('btnPause').style.display = 'none';
     document.getElementById('btnResume').style.display = 'none';
+    document.getElementById('btnSwitchSource').style.display = 'none';
+    document.getElementById('btnToggleVideo').style.display = 'none';
 
-    log("⏹️ 錄影結束，正在提取最後一段切片...");
+    log("⏹️ 錄影結束，正在提取最後一段不到一分鐘的切片...");
 
-    // 確保最後一個切片被裝入任務鎖
+    // 確保最後一個切片進入 activeProcessingTasks
     const onStopPromise = new Promise(resolve => {
       if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
         const originalOnStop = mediaRecorder.onstop;
@@ -357,42 +465,42 @@
           resolve();
         };
         mediaRecorder.stop(); 
-      } else {
-        resolve();
-      }
+      } else resolve();
     });
 
     await onStopPromise;
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
 
-    // 🏆 關鍵：嚴格等待所有背景任務寫完
+    // 🏆 嚴格鎖定：等待雙軌 100% 寫完
     if (activeProcessingTasks.size > 0) {
-      log(`⏳ 系統鎖定中：嚴格等待 ${activeProcessingTasks.size} 個辨識/建檔任務完全寫入試算表...`);
+      log(`⏳ 系統嚴格鎖定中：等待剩餘 ${activeProcessingTasks.size} 個辨識/建檔任務完全寫入試算表...`);
       while(activeProcessingTasks.size > 0) {
         await Promise.all(Array.from(activeProcessingTasks));
       }
     }
 
-    log("✅ 所有切片資料已 100% 精確寫入！");
-    log("🧠 正在變更狀態為「錄製完成」(D欄)，並產出最終總結(G欄)...");
+    log("✅ 所有切片資料已 100% 同步寫入試算表！");
+    log("🧠 正在將狀態變更為「錄製完成」，並根據所有逐字稿產出總結...");
     
     try {
-      const res = await callGasAPI({ action: "finalizeMeeting", rowIndex: meetingData.rowIndex });
+      const res = await callGasAPI({ 
+        action: "finalizeMeeting", 
+        rowIndex: meetingData.rowIndex,
+        email: loggedInEmail
+      });
+      
       if (res.status === 'success') {
-        log("🎉 會議紀錄全部完成！");
-        document.getElementById('finalSummaryArea').style.display = 'block';
+        log("🎉 會議紀錄統整完畢！");
+        switchStep('step-result'); // 隱藏錄製區，顯示結果區
         document.getElementById('finalSummary').innerText = res.data.summary;
         document.getElementById('fullDetails').innerText = res.data.details;
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       } else {
         log("❌ 最終總結產出失敗: " + res.message);
+        document.getElementById('btnStop').innerText = "❌ 總結失敗";
       }
     } catch(err) {
       log("❌ 請求最終總結異常: " + err.message);
     }
-    
-    document.getElementById('btnStart').style.display = 'inline-block';
-    document.getElementById('btnStart').disabled = false;
   }
 </script>
 
