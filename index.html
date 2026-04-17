@@ -86,8 +86,8 @@
     
     <div class="controls-overlay" id="playerControls">
       <button class="control-btn" id="btnSwitchSource" onclick="switchSourceAction()" title="切換鏡頭/螢幕">
-        <i data-lucide="refresh-ccw" id="icon-source"></i>
-      </button>
+  <i data-lucide="switch-camera" id="icon-source"></i>
+</button>
       <button class="control-btn" id="btnToggleVideo" onclick="toggleVideo()" title="開啟/關閉畫面">
         <i data-lucide="video-off" id="icon-video"></i>
       </button>
@@ -262,7 +262,8 @@
   videoContainer.addEventListener('touchstart', wakeControls);
 
   window.onload = async () => {
-    document.getElementById('icon-source').setAttribute('data-lucide', isMobile ? "smartphone" : "monitor");
+    // 將這裡固定設定為 switch-camera，不再因為裝置不同而變成手機或螢幕的圖示
+    document.getElementById('icon-source').setAttribute('data-lucide', 'switch-camera');
     lucide.createIcons();
     wakeControls(); 
     loadState(); // 載入記憶資料
