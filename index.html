@@ -28,11 +28,12 @@
     .video-container { position: relative; width: 100%; max-height: 450px; background: #000; border-radius: 12px; margin-bottom: 24px; overflow: hidden; }
     video { width: 100%; height: 100%; object-fit: contain; }
     
+    /* 錄影紅點徽章 (純CSS) */
     .status-badge { position: absolute; top: 16px; right: 16px; background: rgba(220, 38, 38, 0.9); color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 13px; display: none; z-index: 10; letter-spacing: 0.5px; align-items: center; gap: 6px; }
     .pulse-dot { width: 8px; height: 8px; background-color: white; border-radius: 50%; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
     
-    /* 懸浮控制列 (閒置自動隱藏) */
+    /* 懸浮控制列 */
     .controls-overlay { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); padding: 12px 24px; border-radius: 100px; display: flex; gap: 20px; align-items: center; opacity: 0; transition: opacity 0.4s ease; z-index: 20; }
     .video-container.active-controls .controls-overlay { opacity: 1; }
     
@@ -79,7 +80,7 @@
   <div class="video-container" id="videoContainer">
     <div id="recBadge" class="status-badge">
       <div class="pulse-dot"></div>
-      <span>REC</span>
+      <span id="recText">REC</span>
     </div>
     <video id="mediaPlayer" autoplay muted playsinline></video>
     
@@ -105,34 +106,24 @@
     </div>
   </div>
 
-  <div id="step-auth" class="step-section active">
-    <div class="mb-4">
-      <label class="form-label fw-bold text-secondary">工作信箱</label>
-      <div class="d-flex gap-2">
-        <input type="email" id="authEmail" class="form-control form-control-lg" placeholder="name@company.com">
-        <button class="btn-outline" id="btnSendCode" onclick="sendCode()">
-          <i data-lucide="mail" style="width:18px;"></i> 取得驗證碼
-        </button>
-      </div>
-    </div>
-    <div class="mb-4" id="codeGroup" style="display:none;">
-      <label class="form-label fw-bold text-secondary">驗證碼</label>
-      <input type="text" id="authCode" class="form-control form-control-lg mb-3" placeholder="請輸入 6 位數代碼">
-      <button class="btn-brand w-100" id="btnVerify" onclick="verifyCode()">
-        <i data-lucide="log-in" style="width:18px;"></i> 驗證並登入
+  <div id="step-setup" class="step-section active">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold text-primary m-0">設定會議資訊</h5>
+      <button class="btn-outline py-1 px-2" style="font-size: 13px;" onclick="resetApp()">
+        <i data-lucide="rotate-ccw" style="width:14px;"></i> 重置系統
       </button>
     </div>
-    <div id="authMsg" class="text-center mt-3 fs-6"></div>
-  </div>
-
-  <div id="step-setup" class="step-section">
+    <div class="mb-4">
+      <label class="form-label fw-bold text-secondary">工作信箱 (會議記錄人)</label>
+      <input type="email" id="setupEmail" class="form-control form-control-lg" placeholder="name@company.com" oninput="saveState()">
+    </div>
     <div class="mb-4">
       <label class="form-label fw-bold text-secondary">所屬單位</label>
-      <input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：產品研發部">
+      <input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：產品研發部" oninput="saveState()">
     </div>
     <div class="mb-4">
       <label class="form-label fw-bold text-secondary">與會人員</label>
-      <textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="請輸入參與者姓名..."></textarea>
+      <textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="請輸入參與者姓名..." oninput="saveState()"></textarea>
     </div>
     <button class="btn-brand w-100" id="btnStartSetup" onclick="startMeeting()">
       <i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製
@@ -145,18 +136,14 @@
   </div>
   
   <div id="step-result" class="step-section mt-2">
-    <div id="docLinkArea" style="display:none;" class="mb-4">
-      <label class="form-label fw-bold text-secondary">Google 文件連結 (公開檢視)</label>
-      <div class="url-box">
-        <i data-lucide="file-text" style="width:16px; color: var(--accent);"></i>
-        <div class="url-text" id="docUrlText">載入中...</div>
-        <button class="btn-outline" style="padding: 6px 12px; font-size: 13px;" onclick="copyToClipboard('docUrlText')">複製</button>
-      </div>
-    </div>
-
     <div class="mb-4 mt-3">
-      <label class="form-label fw-bold text-secondary">專業會議總結 (可自由編輯)</label>
-      <textarea id="finalSummary" class="result-editor"></textarea>
+      <div class="d-flex justify-content-between align-items-end mb-2">
+        <label class="form-label fw-bold text-secondary m-0">專業會議總結 (可自由編輯)</label>
+        <button class="btn-outline py-1 px-2" style="font-size: 13px;" onclick="resetApp()">
+          <i data-lucide="rotate-ccw" style="width:14px;"></i> 重置系統
+        </button>
+      </div>
+      <textarea id="finalSummary" class="result-editor" oninput="saveState()"></textarea>
       
       <div class="d-flex gap-2 mt-3 justify-content-end flex-wrap">
         <button class="btn-outline" onclick="saveSummary()" id="btnSaveSummary">
@@ -167,6 +154,15 @@
         </button>
       </div>
       <div id="actionFeedback" class="text-end mt-2 fs-6 text-success" style="height: 20px;"></div>
+    </div>
+    
+    <div id="docLinkArea" style="display:none;" class="mb-4">
+      <label class="form-label fw-bold text-secondary">Google 文件連結 (公開檢視)</label>
+      <div class="url-box">
+        <i data-lucide="file-text" style="width:16px; color: var(--accent);"></i>
+        <div class="url-text" id="docUrlText">載入中...</div>
+        <button class="btn-outline" style="padding: 6px 12px; font-size: 13px;" onclick="copyToClipboard('docUrlText')">複製</button>
+      </div>
     </div>
     
     <details class="mt-4">
@@ -184,9 +180,8 @@
   // ==========================================
   // ⚠️ 請填入你的 GAS URL
   // ==========================================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbydOD5o8caxWQwbFazjhNK2M7noJdnpvi7jI-QY7KeEBbnpgeWZbEkLM5oVsCMC-Kdt/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwOQx2kVxAJSMoC6Mpd-k7OtwQWD_4RrAofhJu00XYnHn5RCi3VfLbCoSnqcP3LhTE/exec";
 
-  let loggedInEmail = "";
   let currentStream = null;
   let mediaRecorder = null;
   let chunkInterval;
@@ -194,12 +189,10 @@
   let meetingData = { folderId: '', rowIndex: 0, meetingName: '' };
   
   let isRecording = false;
-  let isPaused = false; // 🌟 新增：暫停狀態旗標，徹底防堵背景傳輸
-  
+  let isPaused = false; 
   let isVideoEnabled = false; 
   let wakeLock = null;
   let activeProcessingTasks = new Set();
-  let finalVideoUrls = "";
 
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   let mobileFacingMode = "user"; 
@@ -210,6 +203,52 @@
   const recBadge = document.getElementById('recBadge');
   const videoContainer = document.getElementById('videoContainer');
 
+  // --- 本地狀態記憶 (localStorage) ---
+  function saveState(overrides = {}) {
+    const currentState = JSON.parse(localStorage.getItem('growthx_state') || '{}');
+    const newState = {
+      ...currentState,
+      email: document.getElementById('setupEmail').value,
+      company: document.getElementById('setupCompany').value,
+      attendees: document.getElementById('setupAttendees').value,
+      finalSummary: document.getElementById('finalSummary').value,
+      fullDetails: document.getElementById('fullDetails').innerText,
+      docUrl: document.getElementById('docUrlText').innerText,
+      ...overrides
+    };
+    localStorage.setItem('growthx_state', JSON.stringify(newState));
+  }
+
+  function loadState() {
+    const saved = localStorage.getItem('growthx_state');
+    if (saved) {
+      const state = JSON.parse(saved);
+      document.getElementById('setupEmail').value = state.email || '';
+      document.getElementById('setupCompany').value = state.company || '';
+      document.getElementById('setupAttendees').value = state.attendees || '';
+      
+      if (state.step === 'step-result') {
+        document.getElementById('finalSummary').value = state.finalSummary || '';
+        document.getElementById('fullDetails').innerText = state.fullDetails || '';
+        if (state.docUrl && state.docUrl !== '載入中...') {
+          document.getElementById('docLinkArea').style.display = 'block';
+          document.getElementById('docUrlText').innerText = state.docUrl;
+        }
+        meetingData = state.meetingData || {};
+        switchStep('step-result');
+        document.getElementById('playerControls').style.display = 'none';
+      }
+    }
+  }
+
+  function resetApp() {
+    if(confirm("確定要重置系統嗎？這將清空目前畫面上的所有資料。")) {
+      localStorage.removeItem('growthx_state');
+      location.reload();
+    }
+  }
+
+  // --- 懸浮控制列自動隱藏邏輯 ---
   let hideControlsTimeout;
   function wakeControls() {
     videoContainer.classList.add('active-controls');
@@ -221,16 +260,21 @@
   videoContainer.addEventListener('mousemove', wakeControls);
   videoContainer.addEventListener('click', wakeControls);
   videoContainer.addEventListener('touchstart', wakeControls);
-  wakeControls(); 
 
   window.onload = async () => {
     document.getElementById('icon-source').setAttribute('data-lucide', isMobile ? "smartphone" : "monitor");
     lucide.createIcons();
-    try {
-      await acquireStream();
-      logMsg("authMsg", "[系統] 設備授權成功，目前為純語音模式", "text-success");
-    } catch (err) {
-      logMsg("authMsg", "[錯誤] 請允許瀏覽器存取麥克風與相機權限", "text-danger");
+    wakeControls(); 
+    loadState(); // 載入記憶資料
+    
+    // 如果不是停留在結果頁，要求權限
+    if (document.getElementById('step-setup').classList.contains('active')) {
+      try {
+        await acquireStream();
+        console.log("[系統] 設備授權成功");
+      } catch (err) {
+        console.log("[錯誤] 請允許瀏覽器存取麥克風與相機權限");
+      }
     }
   };
 
@@ -245,12 +289,6 @@
     logBox.scrollTop = logBox.scrollHeight;
   }
 
-  function logMsg(elementId, msg, colorClass) {
-    const el = document.getElementById(elementId);
-    el.innerText = msg;
-    el.className = `text-center mt-2 fs-6 fw-bold ${colorClass}`;
-  }
-
   async function callGasAPI(payload) {
     try {
       const response = await fetch(GAS_URL, {
@@ -262,41 +300,6 @@
       return await response.json();
     } catch (err) {
       throw new Error("網路請求失敗：" + err.message);
-    }
-  }
-
-  async function sendCode() {
-    const email = document.getElementById('authEmail').value;
-    if (!email) return alert("請輸入信箱");
-    document.getElementById('btnSendCode').disabled = true;
-    logMsg("authMsg", "[系統] 驗證碼發送中...", "text-muted");
-    try {
-      const res = await callGasAPI({ action: "sendCode", email: email });
-      if (res.status === 'success') {
-        document.getElementById('codeGroup').style.display = 'block';
-        logMsg("authMsg", "[成功] 已發送至信箱", "text-success");
-      } else throw new Error(res.message);
-    } catch (err) {
-      logMsg("authMsg", "[錯誤] 發送失敗", "text-danger");
-      document.getElementById('btnSendCode').disabled = false;
-    }
-  }
-
-  async function verifyCode() {
-    const email = document.getElementById('authEmail').value;
-    const code = document.getElementById('authCode').value;
-    if (!code) return alert("請輸入驗證碼");
-    document.getElementById('btnVerify').disabled = true;
-    logMsg("authMsg", "[系統] 驗證中...", "text-muted");
-    try {
-      const res = await callGasAPI({ action: "verifyCode", email: email, code: code });
-      if (res.status === 'success') {
-        loggedInEmail = email; 
-        switchStep('step-setup'); 
-      } else throw new Error(res.message);
-    } catch (err) {
-      logMsg("authMsg", "[錯誤] 驗證失敗: 代碼錯誤", "text-danger");
-      document.getElementById('btnVerify').disabled = false;
     }
   }
 
@@ -333,7 +336,6 @@
       }
       mediaPlayer.srcObject = currentStream;
       mediaPlayer.muted = true; 
-      
       const videoTrack = currentStream.getVideoTracks()[0];
       if (videoTrack) videoTrack.enabled = isVideoEnabled; 
     } catch (err) {
@@ -348,13 +350,10 @@
       mediaRecorder.stop(); 
       clearTimeout(chunkInterval);
     }
-
     if (isMobile) mobileFacingMode = (mobileFacingMode === "user") ? "environment" : "user";
     else desktopSource = (desktopSource === "camera") ? "screen" : "camera";
-
     try {
       await acquireStream();
-      // 如果原本在錄製且非暫停狀態，才繼續錄製
       if (wasRecording && !isPaused) {
         log("[成功] 畫面切換完成，繼續錄製");
         startChunkRecording();
@@ -384,16 +383,19 @@
   }
 
   async function startMeeting() {
+    const email = document.getElementById('setupEmail').value;
     const company = document.getElementById('setupCompany').value;
     const attendees = document.getElementById('setupAttendees').value;
-    if (!company || !attendees) return alert("請填寫必要資訊");
+    if (!email || !company || !attendees) return alert("請填寫所有會議資訊");
+
+    saveState({ step: 'step-recording' });
 
     document.getElementById('btnStartSetup').disabled = true;
     document.getElementById('btnStartSetup').innerHTML = `<i data-lucide="loader" class="pulse-dot" style="background:none;"></i> 連線中...`;
     lucide.createIcons();
 
     try {
-      const res = await callGasAPI({ action: "initMeeting", email: loggedInEmail, company: company, attendees: attendees });
+      const res = await callGasAPI({ action: "initMeeting", email: email, company: company, attendees: attendees });
       if (res.status === 'success') {
         meetingData = res.data;
         switchStep('step-recording'); 
@@ -406,7 +408,7 @@
         
         if (currentStream && currentStream.getAudioTracks().length > 0) {
           isRecording = true;
-          isPaused = false; // 初始非暫停
+          isPaused = false; 
           chunkIndex = 1;
           recBadge.style.display = 'flex';
           
@@ -424,36 +426,35 @@
     }
   }
 
-  // 🌟 嚴格控制暫停：切斷資料傳輸與迴圈
   function pauseMeeting() {
     if (mediaRecorder && mediaRecorder.state === "recording") {
-      isPaused = true; // 設定為暫停狀態
-      log("[控制] 錄製暫停。進行最後一段切片傳輸後，將徹底停止背景傳輸。");
-      mediaRecorder.stop(); // 觸發 onstop 將當前片段送出
+      isPaused = true; 
+      log("[控制] 錄製暫停。進行最後一段切片傳輸後，停止背景傳輸。");
+      mediaRecorder.stop(); 
       clearTimeout(chunkInterval);
       
       document.getElementById('btnPause').style.display = 'none';
       document.getElementById('btnResume').style.display = 'flex';
       recBadge.style.background = "#f59e0b";
-      recBadge.querySelector('span').innerText = "PAUSED";
+      document.getElementById('recText').innerText = "PAUSED";
     }
   }
 
   function resumeMeeting() {
     log("[控制] 錄製恢復，重新啟動雙軌傳輸...");
     if (currentStream) {
-      isPaused = false; // 解除暫停狀態
-      startChunkRecording(); // 手動重啟錄製循環
+      isPaused = false; 
+      startChunkRecording(); 
       
       document.getElementById('btnResume').style.display = 'none';
       document.getElementById('btnPause').style.display = 'flex';
       recBadge.style.background = "rgba(220, 38, 38, 0.9)";
-      recBadge.querySelector('span').innerText = "REC";
+      document.getElementById('recText').innerText = "REC";
     }
   }
 
   function startChunkRecording() {
-    if (!isRecording || !currentStream || isPaused) return; // 🌟 若為暫停狀態，徹底阻擋錄影啟動
+    if (!isRecording || !currentStream || isPaused) return; 
     let recordedChunks = [];
     const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
     mediaRecorder = new MediaRecorder(currentStream, { mimeType: mimeType });
@@ -465,7 +466,6 @@
         processAndUploadChunk(blob, mimeType, chunkIndex);
         chunkIndex++;
       }
-      // 🌟 嚴格確認不是處於暫停狀態，才啟動下一分鐘循環
       if (isRecording && !isPaused) startChunkRecording(); 
     };
 
@@ -495,7 +495,6 @@
     taskPromise.then(() => activeProcessingTasks.delete(taskPromise));
   }
 
-  // === 結束與產出 ===
   async function stopMeeting() {
     isRecording = false; 
     isPaused = false;
@@ -527,16 +526,16 @@
     log("[系統] 呼叫 AI 進行會議總結...");
     
     try {
-      const res = await callGasAPI({ action: "finalizeMeeting", rowIndex: meetingData.rowIndex, email: loggedInEmail });
+      const res = await callGasAPI({ action: "finalizeMeeting", rowIndex: meetingData.rowIndex, email: document.getElementById('setupEmail').value });
       if (res.status === 'success') {
         switchStep('step-result'); 
         
-        finalVideoUrls = res.data.videoUrls || "無雲端影音檔案紀錄";
-        
-        const finalContent = res.data.summary + "\n\n【公開雲端影音檔案連結】\n" + finalVideoUrls;
+        const finalContent = res.data.summary + "\n\n【公開雲端影音檔案連結】\n" + (res.data.videoUrls || "無影音檔案紀錄");
         document.getElementById('finalSummary').value = finalContent;
         document.getElementById('fullDetails').innerText = res.data.details;
         
+        saveState({ step: 'step-result', meetingData: meetingData });
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       } else {
         log("[錯誤] 總結失敗: " + res.message);
       }
@@ -545,7 +544,6 @@
     }
   }
 
-  // === 擴充操作：儲存、匯出、複製 ===
   function copyToClipboard(elementId) {
     const text = document.getElementById(elementId).innerText;
     navigator.clipboard.writeText(text).then(() => {
@@ -563,6 +561,7 @@
     try {
       await callGasAPI({ action: "updateSummary", rowIndex: meetingData.rowIndex, newSummary: newSummary });
       showFeedback("變更已成功同步至資料庫");
+      saveState(); // 同步至 localstorage
     } catch(err) {
       showFeedback("儲存失敗", true);
     }
@@ -584,8 +583,9 @@
       const res = await callGasAPI({ action: "createDoc", meetingName: meetingData.meetingName, summary: summary, details: details, folderId: meetingData.folderId });
       if(res.status === 'success') {
         showFeedback("文件建立並歸檔完成！");
-        document.getElementById('docLinkArea').style.display = 'block';
+        document.getElementById('docLinkArea').style.display = 'flex';
         document.getElementById('docUrlText').innerText = res.data;
+        saveState({ docUrl: res.data });
         window.open(res.data, '_blank'); 
       }
     } catch(err) {
