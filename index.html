@@ -28,18 +28,20 @@
     .video-container { position: relative; width: 100%; max-height: 450px; background: #000; border-radius: 12px; margin-bottom: 24px; overflow: hidden; }
     video { width: 100%; height: 100%; object-fit: contain; }
     
+    /* 錄影紅點徽章 (純CSS無Emoji) */
     .status-badge { position: absolute; top: 16px; right: 16px; background: rgba(220, 38, 38, 0.9); color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 13px; display: none; z-index: 10; letter-spacing: 0.5px; align-items: center; gap: 6px; }
     .pulse-dot { width: 8px; height: 8px; background-color: white; border-radius: 50%; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
     
     /* 懸浮控制列 (閒置自動隱藏) */
-    .controls-overlay { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); padding: 10px 24px; border-radius: 100px; display: flex; gap: 20px; align-items: center; opacity: 0; transition: opacity 0.3s ease; z-index: 20; }
+    .controls-overlay { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); padding: 12px 24px; border-radius: 100px; display: flex; gap: 20px; align-items: center; opacity: 0; transition: opacity 0.4s ease; z-index: 20; }
     .video-container.active-controls .controls-overlay { opacity: 1; }
     
-    .control-btn { background: none; border: none; color: white; cursor: pointer; padding: 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .control-btn { background: none; border: none; color: white; cursor: pointer; padding: 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; outline: none; }
     .control-btn:hover { background: rgba(255, 255, 255, 0.2); }
-    .control-btn.stop-btn:hover { background: rgba(239, 68, 68, 0.8); }
-    .control-btn.pause-btn:hover { background: rgba(245, 158, 11, 0.8); }
+    .control-btn.stop-btn:hover { background: rgba(239, 68, 68, 0.9); color: white; }
+    .control-btn.pause-btn:hover { background: rgba(245, 158, 11, 0.9); color: white; }
+    .control-btn.play-btn:hover { background: rgba(16, 185, 129, 0.9); color: white; }
     .control-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .control-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); }
 
@@ -83,23 +85,23 @@
     <video id="mediaPlayer" autoplay muted playsinline></video>
     
     <div class="controls-overlay" id="playerControls">
-      <button class="control-btn" id="btnSwitchSource" onclick="switchSourceAction()" title="切換鏡頭/螢幕">
+      <button class="control-btn" id="btnSwitchSource" onclick="switchSourceAction()" title="切換攝影機/螢幕">
         <i data-lucide="refresh-ccw" id="icon-source"></i>
       </button>
       <button class="control-btn" id="btnToggleVideo" onclick="toggleVideo()" title="開啟/關閉畫面">
-        <i data-lucide="eye-off" id="icon-video"></i>
+        <i data-lucide="video-off" id="icon-video"></i>
       </button>
       
       <div class="control-divider" id="recordDivider" style="display:none;"></div>
       
       <button class="control-btn pause-btn" id="btnPause" onclick="pauseMeeting()" title="暫停錄製" style="display:none;">
-        <i data-lucide="pause"></i>
+        <i data-lucide="pause" style="fill: currentColor;"></i>
       </button>
       <button class="control-btn play-btn" id="btnResume" onclick="resumeMeeting()" title="繼續錄製" style="display:none;">
-        <i data-lucide="play"></i>
+        <i data-lucide="play" style="fill: currentColor;"></i>
       </button>
       <button class="control-btn stop-btn" id="btnStop" onclick="stopMeeting()" title="結束會議並總結" style="display:none;">
-        <i data-lucide="square"></i>
+        <i data-lucide="square" style="fill: currentColor;"></i>
       </button>
     </div>
   </div>
@@ -144,7 +146,7 @@
   </div>
   
   <div id="step-result" class="step-section mt-2">
-    <div id="docLinkArea" style="display:none;">
+    <div id="docLinkArea" style="display:none;" class="mb-4">
       <label class="form-label fw-bold text-secondary">Google 文件連結 (公開檢視)</label>
       <div class="url-box">
         <i data-lucide="file-text" style="width:16px; color: var(--accent);"></i>
@@ -159,7 +161,7 @@
       
       <div class="d-flex gap-2 mt-3 justify-content-end flex-wrap">
         <button class="btn-outline" onclick="saveSummary()" id="btnSaveSummary">
-          <i data-lucide="save" style="width:16px;"></i> 儲存變更至資料庫
+          <i data-lucide="save" style="width:16px;"></i> 儲存至資料庫
         </button>
         <button class="btn-brand" onclick="exportToDoc()" id="btnExportDoc">
           <i data-lucide="file-text" style="width:16px;"></i> 建立 Google 文件
@@ -178,12 +180,13 @@
 <div class="text-center mt-5 text-muted" style="font-size: 13px;">All Copyright recieved by ... GrowthX｜微企AI學院</div>
 
 <script>
+  // 啟動 Lucide 圖示渲染
   lucide.createIcons();
 
   // ==========================================
   // ⚠️ 請填入你的 GAS URL
   // ==========================================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbw4h-FBKYPtMeth5HGAcoH9s1sJOQSeijLTi8qAAPYViGaL8iwe0YPuiGbBs8_wOb4i/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbydOD5o8caxWQwbFazjhNK2M7noJdnpvi7jI-QY7KeEBbnpgeWZbEkLM5oVsCMC-Kdt/exec";
 
   let loggedInEmail = "";
   let currentStream = null;
@@ -219,7 +222,7 @@
   videoContainer.addEventListener('mousemove', wakeControls);
   videoContainer.addEventListener('click', wakeControls);
   videoContainer.addEventListener('touchstart', wakeControls);
-  wakeControls(); // 初始顯示
+  wakeControls(); // 初始喚醒
 
   // --- 網頁載入初始化 ---
   window.onload = async () => {
@@ -269,12 +272,12 @@
     const email = document.getElementById('authEmail').value;
     if (!email) return alert("請輸入信箱");
     document.getElementById('btnSendCode').disabled = true;
-    logMsg("authMsg", "驗證碼發送中...", "text-muted");
+    logMsg("authMsg", "[系統] 驗證碼發送中...", "text-muted");
     try {
       const res = await callGasAPI({ action: "sendCode", email: email });
       if (res.status === 'success') {
         document.getElementById('codeGroup').style.display = 'block';
-        logMsg("authMsg", "[成功] 已發送至信箱", "text-success");
+        logMsg("authMsg", "[成功] 驗證碼已發送至信箱", "text-success");
       } else throw new Error(res.message);
     } catch (err) {
       logMsg("authMsg", "[錯誤] 發送失敗", "text-danger");
@@ -287,7 +290,7 @@
     const code = document.getElementById('authCode').value;
     if (!code) return alert("請輸入驗證碼");
     document.getElementById('btnVerify').disabled = true;
-    logMsg("authMsg", "驗證中...", "text-muted");
+    logMsg("authMsg", "[系統] 驗證中...", "text-muted");
     try {
       const res = await callGasAPI({ action: "verifyCode", email: email, code: code });
       if (res.status === 'success') {
@@ -308,13 +311,12 @@
     if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; });
   }
 
-  // === 獲取串流 (強制 480p) ===
+  // === 獲取串流 (強制 480p 效能傳輸) ===
   async function acquireStream() {
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
     const constraints = { audio: true };
     try {
       if (isMobile) {
-        // 480p resolution
         constraints.video = { facingMode: mobileFacingMode, width: { ideal: 854 }, height: { ideal: 480 } };
         currentStream = await navigator.mediaDevices.getUserMedia(constraints);
       } else {
@@ -327,6 +329,8 @@
             if (isRecording) {
               log("[系統] 畫面分享中斷，切回視訊鏡頭");
               desktopSource = "camera";
+              document.getElementById('icon-source').setAttribute('data-lucide', 'monitor');
+              lucide.createIcons();
               acquireStream().then(() => { if (isRecording) startChunkRecording(); });
             }
           };
@@ -360,7 +364,7 @@
         startChunkRecording();
       }
     } catch (e) {
-      log("[錯誤] 切換失敗，請確認權限");
+      log("[錯誤] 切換失敗，請確認設備權限");
     }
   }
 
@@ -372,11 +376,11 @@
         videoTrack.enabled = isVideoEnabled;
         const iconEl = document.getElementById('icon-video');
         if (isVideoEnabled) {
-          iconEl.setAttribute('data-lucide', 'eye');
-          log("[系統] 已開啟畫面預覽");
+          iconEl.setAttribute('data-lucide', 'video');
+          log("[資訊] 已開啟畫面預覽");
         } else {
-          iconEl.setAttribute('data-lucide', 'eye-off');
-          log("[系統] 畫面已關閉，純語音模式");
+          iconEl.setAttribute('data-lucide', 'video-off');
+          log("[資訊] 畫面已關閉，純語音模式");
         }
         lucide.createIcons();
       }
@@ -412,7 +416,7 @@
           recBadge.style.display = 'flex';
           
           await requestWakeLock(); 
-          log("[錄製] 正式開始！系統將進行雙軌並行傳輸");
+          log("[系統] 錄製正式開始！啟動雙軌同步並行傳輸。");
           startChunkRecording();
         }
       } else throw new Error(res.message);
@@ -427,18 +431,18 @@
 
   function pauseMeeting() {
     if (mediaRecorder && mediaRecorder.state === "recording") {
-      log("[暫停] 錄製暫停，上傳當前檔案");
+      log("[控制] 錄製暫停，傳輸當前切片");
       mediaRecorder.stop(); 
       clearTimeout(chunkInterval);
       document.getElementById('btnPause').style.display = 'none';
       document.getElementById('btnResume').style.display = 'flex';
       recBadge.style.background = "#f59e0b";
-      recBadge.querySelector('span').innerText = "PAUSE";
+      recBadge.querySelector('span').innerText = "PAUSED";
     }
   }
 
   function resumeMeeting() {
-    log("[錄製] 錄製恢復");
+    log("[控制] 錄製恢復");
     if (currentStream) {
       startChunkRecording(); 
       document.getElementById('btnResume').style.display = 'none';
@@ -448,6 +452,7 @@
     }
   }
 
+  // === 真正雙軌同步並行 ===
   function startChunkRecording() {
     if (!isRecording || !currentStream) return;
     let recordedChunks = [];
@@ -458,6 +463,7 @@
     mediaRecorder.onstop = () => {
       if (recordedChunks.length > 0) {
         const blob = new Blob(recordedChunks, { type: mimeType });
+        // 嚴格保留此雙軌處理函式調用
         processAndUploadChunk(blob, mimeType, chunkIndex);
         chunkIndex++;
       }
@@ -471,21 +477,23 @@
   }
 
   function processAndUploadChunk(blob, mimeType, currentIndex) {
-    log(`[傳輸] 區段 ${currentIndex} 雙軌並行傳輸中...`);
+    log(`[傳輸] 區段 ${currentIndex} 雙軌並行處理中...`);
     const taskPromise = new Promise((resolve) => {
       const reader = new FileReader();
       reader.readAsDataURL(blob);
       reader.onloadend = async () => {
         const base64Data = reader.result.split(',')[1];
         
+        // 軌道一與軌道二：完完全全同時進行
         const p1 = callGasAPI({ action: "saveDrive", base64Data: base64Data, mimeType: mimeType, folderId: meetingData.folderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         const p2 = callGasAPI({ action: "recognizeAI", base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         
         await Promise.all([p1, p2]);
-        log(`[完成] 區段 ${currentIndex} 建檔與辨識寫入完成`);
+        log(`[成功] 區段 ${currentIndex} 建檔與 AI 辨識同步寫入完成`);
         resolve();
       };
     });
+    // 嚴格保留任務追蹤鎖
     activeProcessingTasks.add(taskPromise);
     taskPromise.then(() => activeProcessingTasks.delete(taskPromise));
   }
@@ -497,10 +505,9 @@
     recBadge.style.display = 'none';
     releaseWakeLock(); 
     
-    // 隱藏控制列上的所有按鈕
+    // 隱藏影片控制列
     document.getElementById('playerControls').style.display = 'none';
-
-    log("[系統] 提取最終區段資料...");
+    log("[系統] 正在提取最終區段資料...");
 
     const onStopPromise = new Promise(resolve => {
       if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
@@ -513,8 +520,9 @@
     await onStopPromise;
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
 
+    // 嚴格鎖定：確保所有背景任務寫完
     if (activeProcessingTasks.size > 0) {
-      log(`[鎖定] 嚴格等待 ${activeProcessingTasks.size} 筆背景任務完成寫入...`);
+      log(`[鎖定] 等待 ${activeProcessingTasks.size} 筆背景雙軌任務完成寫入...`);
       while(activeProcessingTasks.size > 0) {
         await Promise.all(Array.from(activeProcessingTasks));
       }
@@ -527,10 +535,10 @@
       if (res.status === 'success') {
         switchStep('step-result'); 
         
-        finalVideoUrls = res.data.videoUrls || "無影片紀錄";
+        finalVideoUrls = res.data.videoUrls || "無雲端影音檔案紀錄";
         
-        // 將影片網址附加在編輯器最後
-        const finalContent = res.data.summary + "\n\n【雲端影音檔案連結】\n" + finalVideoUrls;
+        // 將公開影片網址自動附加在編輯器最後，確保建立 Doc 時也能一併帶上
+        const finalContent = res.data.summary + "\n\n【公開雲端影音檔案連結】\n" + finalVideoUrls;
         document.getElementById('finalSummary').value = finalContent;
         document.getElementById('fullDetails').innerText = res.data.details;
         
@@ -546,7 +554,7 @@
   function copyToClipboard(elementId) {
     const text = document.getElementById(elementId).innerText;
     navigator.clipboard.writeText(text).then(() => {
-      showFeedback("網址已複製");
+      showFeedback("網址已複製成功");
     });
   }
 
@@ -564,7 +572,7 @@
       showFeedback("儲存失敗", true);
     }
     btn.disabled = false;
-    btn.innerHTML = `<i data-lucide="save" style="width:16px;"></i> 儲存變更至資料庫`;
+    btn.innerHTML = `<i data-lucide="save" style="width:16px;"></i> 儲存至資料庫`;
     lucide.createIcons();
   }
 
@@ -578,11 +586,12 @@
     const details = document.getElementById('fullDetails').innerText;
     
     try {
+      // 呼叫建立文件 API，並將該次會議資料夾 ID 傳入做歸檔
       const res = await callGasAPI({ action: "createDoc", meetingName: meetingData.meetingName, summary: summary, details: details, folderId: meetingData.folderId });
       if(res.status === 'success') {
-        showFeedback("文件已建立！");
+        showFeedback("文件建立並歸檔完成！");
         
-        // 顯示文件連結 UI
+        // 顯示公開文件連結 UI
         document.getElementById('docLinkArea').style.display = 'block';
         document.getElementById('docUrlText').innerText = res.data;
         
