@@ -6,33 +6,37 @@
   <title>AI 商務會議錄製系統</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
-    .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 800px; margin: auto; padding: 30px; background: white;}
+    body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; }
+    .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 800px; margin: auto; padding: 25px; background: white;}
     .video-container { position: relative; width: 100%; max-height: 400px; background: #000; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
-    video { width: 100%; height: 100%; object-fit: contain; }
+    video { width: 100%; height: 100%; max-height: 400px; object-fit: contain; }
     .status-badge { position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.8); color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold; display: none; z-index: 10; }
-    .log-box { height: 180px; overflow-y: auto; background: #2b2b2b; color: #4af626; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.5;}
-    .btn-custom { font-weight: bold; padding: 10px 20px; }
-    .source-btn.active { box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.5); border-color: #0d6efd; }
+    .log-box { height: 160px; overflow-y: auto; background: #2b2b2b; color: #4af626; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.5;}
+    .btn-custom { font-weight: bold; padding: 10px 15px; }
+    /* 優化手機端細節展開的樣式 */
+    details > summary { cursor: pointer; list-style: none; padding: 10px; background-color: #e9ecef; border-radius: 6px; }
+    details > summary::-webkit-details-marker { display: none; }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <h2 class="text-center mb-4 text-primary">🎙️ AI 商務會議分段錄製系統</h2>
+  <h3 class="text-center mb-4 text-primary fw-bold">🎙️ AI 商務行動錄製系統</h3>
   
   <div class="mb-4">
-    <label class="form-label fw-bold">請輸入使用者 Email (作為建檔帳號名稱)：</label>
+    <label class="form-label fw-bold">使用者 Email (帳號名稱)：</label>
     <input type="email" id="userEmail" class="form-control form-control-lg" placeholder="user@business.com">
   </div>
 
-  <div class="d-flex justify-content-center gap-3 mb-3">
-    <button class="btn btn-outline-secondary source-btn active" id="btnCamera" onclick="switchSource('camera')">📹 視訊鏡頭</button>
-    <button class="btn btn-outline-secondary source-btn" id="btnScreen" onclick="switchSource('screen')">💻 電腦螢幕</button>
+  <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">
+    <button class="btn btn-outline-secondary" id="btnSwitchCam" onclick="switchCamera()">🔄 切換鏡頭</button>
+    <button class="btn btn-outline-secondary" id="btnToggleVideo" onclick="toggleVideo()">🙈 關閉畫面 (僅錄音)</button>
   </div>
 
-  <div class="d-flex justify-content-center gap-3 mb-4">
-    <button class="btn btn-primary btn-custom" id="btnStart" onclick="startMeeting()">▶️ 開始會議錄製</button>
+  <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
+    <button class="btn btn-primary btn-custom" id="btnStart" onclick="startMeeting()">▶️ 開始錄製</button>
+    <button class="btn btn-warning btn-custom text-dark" id="btnPause" onclick="pauseMeeting()" style="display:none;">⏸️ 暫停</button>
+    <button class="btn btn-success btn-custom" id="btnResume" onclick="resumeMeeting()" style="display:none;">▶️ 繼續</button>
     <button class="btn btn-danger btn-custom" id="btnStop" onclick="stopMeeting()" disabled>⏹️ 結束會議</button>
   </div>
 
@@ -41,12 +45,17 @@
     <video id="mediaPlayer" autoplay muted playsinline></video>
   </div>
 
-  <h5 class="fw-bold">系統狀態監控 (雙軌非同步處理中)：</h5>
+  <h6 class="fw-bold">系統狀態監控：</h6>
   <div id="systemLog" class="log-box mb-4">系統準備就緒...<br></div>
   
   <div id="finalSummaryArea" class="mt-4" style="display:none;">
-    <h4 class="fw-bold text-success">📝 最終會議總結：</h4>
-    <div id="finalSummary" class="p-4 border border-success rounded bg-light" style="white-space: pre-wrap; font-size: 16px; line-height: 1.6;"></div>
+    <h4 class="fw-bold text-success mb-3">📝 專業會議總結：</h4>
+    <div id="finalSummary" class="p-3 border border-success rounded bg-light" style="white-space: pre-wrap; font-size: 15px; line-height: 1.6;"></div>
+    
+    <details class="mt-4">
+      <summary class="fw-bold text-secondary text-center border">📄 點擊展開：完整畫面描述與逐字稿</summary>
+      <div id="fullDetails" class="p-3 mt-2 border rounded bg-white text-dark" style="white-space: pre-wrap; font-size: 14px; background-color: #fafafa;"></div>
+    </details>
   </div>
 </div>
 
@@ -54,7 +63,7 @@
   // ==========================================
   // ⚠️ 請將下方的引號內容替換成你最新部署的 GAS Web App 網址
   // ==========================================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzeaGu5Mq0sEe3Efow_3Yu8dYrH76YujfNYOVFZ_6wpLf-8iXQ5C0JYIcyPk7gep6sT/exec";
+  const GAS_URL = "請在此貼上你的_GAS_網頁應用程式網址";
 
   let currentStream = null;
   let mediaRecorder = null;
@@ -62,20 +71,22 @@
   let chunkIndex = 1;
   let meetingData = { folderId: '', rowIndex: 0 };
   let isRecording = false;
-  let currentSource = 'camera'; // 預設使用鏡頭
+  
+  // 鏡頭管理變數
+  let videoDevices = [];
+  let currentDeviceIndex = 0;
+  let isVideoEnabled = true;
 
   const mediaPlayer = document.getElementById('mediaPlayer');
   const logBox = document.getElementById('systemLog');
   const recBadge = document.getElementById('recBadge');
 
-  // === UI 與 Log 輔助函數 ===
   function log(msg) {
     const time = new Date().toLocaleTimeString('zh-TW', { hour12: false });
     logBox.innerHTML += `[${time}] ${msg}<br>`;
     logBox.scrollTop = logBox.scrollHeight;
   }
 
-  // === 呼叫後端 API (雙軌核心：使用 fetch 達成非同步不卡頓) ===
   async function callGasAPI(payload) {
     try {
       const response = await fetch(GAS_URL, {
@@ -90,102 +101,140 @@
     }
   }
 
-  // === 切換鏡頭與螢幕邏輯 ===
-  async function switchSource(sourceType) {
-    if (sourceType === currentSource && currentStream) return;
-    
-    // 更新按鈕 UI 狀態
-    document.getElementById('btnCamera').classList.remove('active');
-    document.getElementById('btnScreen').classList.remove('active');
-    document.getElementById(sourceType === 'camera' ? 'btnCamera' : 'btnScreen').classList.add('active');
-    
-    currentSource = sourceType;
-
-    // 如果正在錄製中切換畫面，我們需要先停止目前的錄製，這會觸發切片送出，然後自動啟動新畫面的錄製
-    const wasRecording = isRecording;
-    if (wasRecording && mediaRecorder && mediaRecorder.state === "recording") {
-      log("切換畫面中，正在切割當前檔案...");
-      mediaRecorder.stop(); 
-      clearTimeout(chunkInterval);
-    }
-
-    // 關閉舊的影像軌道
-    if (currentStream) {
-      currentStream.getTracks().forEach(track => track.stop());
-    }
-
+  // === 初始化抓取設備清單 ===
+  async function getCameras() {
     try {
-      const constraints = { video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true };
-      
-      if (sourceType === 'camera') {
-        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-        log("✅ 已切換至：視訊鏡頭");
-      } else {
-        // 喚起螢幕分享選擇視窗
-        currentStream = await navigator.mediaDevices.getDisplayMedia(constraints);
-        
-        // 監聽使用者如果從瀏覽器原生的「停止共用」按鈕關閉螢幕時的處理
-        currentStream.getVideoTracks()[0].onended = () => {
-          if (isRecording) {
-            log("⚠️ 偵測到螢幕分享中斷，自動切回鏡頭...");
-            switchSource('camera');
-          }
-        };
-        log("✅ 已切換至：電腦螢幕");
-      }
-      
-      mediaPlayer.srcObject = currentStream;
-
-      // 如果原本是在錄製狀態，取得新畫面後立刻繼續錄製
-      if (wasRecording) {
-        log("畫面切換完成，繼續錄製新切片...");
-        startChunkRecording();
-      }
-
-    } catch (err) {
-      log("無法存取裝置：" + err.message);
-      // 如果切換失敗（例如使用者取消螢幕分享），且原本在錄影，則嘗試切回鏡頭
-      if (wasRecording) switchSource('camera'); 
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      videoDevices = devices.filter(device => device.kind === 'videoinput');
+    } catch(err) {
+      log("無法取得鏡頭清單：" + err.message);
     }
   }
 
-  // === 啟動會議 ===
+  // === 啟動鏡頭串流 ===
+  async function startVideoStream(deviceId = null) {
+    if (currentStream) {
+      currentStream.getTracks().forEach(track => track.stop());
+    }
+    const constraints = {
+      audio: true,
+      video: deviceId ? { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } } 
+                      : { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }
+    };
+    try {
+      currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+      mediaPlayer.srcObject = currentStream;
+      
+      // 套用當前的畫面開關狀態
+      currentStream.getVideoTracks()[0].enabled = isVideoEnabled;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  // === 切換前後鏡頭 ===
+  async function switchCamera() {
+    if (videoDevices.length === 0) await getCameras();
+    
+    if (videoDevices.length > 1) {
+      currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+      const deviceId = videoDevices[currentDeviceIndex].deviceId;
+      
+      const wasRecording = isRecording;
+      if (wasRecording && mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop(); 
+        clearTimeout(chunkInterval);
+      }
+      
+      await startVideoStream(deviceId);
+      log("🔄 已切換至其他鏡頭");
+      
+      if (wasRecording) startChunkRecording();
+    } else {
+      log("⚠️ 您的設備只有一個鏡頭，無法切換。");
+    }
+  }
+
+  // === 關閉/開啟畫面 (保留錄音) ===
+  function toggleVideo() {
+    if (currentStream) {
+      const videoTrack = currentStream.getVideoTracks()[0];
+      if (videoTrack) {
+        isVideoEnabled = !isVideoEnabled;
+        videoTrack.enabled = isVideoEnabled;
+        
+        const btn = document.getElementById('btnToggleVideo');
+        if (isVideoEnabled) {
+          btn.innerText = "🙈 關閉畫面 (僅錄音)";
+          log("👀 畫面已開啟");
+        } else {
+          btn.innerText = "👀 開啟畫面";
+          log("🙈 畫面已暫時關閉，將繼續錄製純語音");
+        }
+      }
+    }
+  }
+
+  // === 會議控制：開始 ===
   async function startMeeting() {
     const email = document.getElementById('userEmail').value;
     if (!email) return alert("請輸入 Email！");
 
     document.getElementById('btnStart').disabled = true;
-    log("正在向雲端請求初始化資料夾與試算表...");
+    log("正在建立雲端會議專案...");
 
     try {
       const res = await callGasAPI({ action: "initMeeting", userEmail: email });
       if (res.status === 'success') {
         meetingData = res.data;
-        log(`初始化完成！會議專案建立成功。`);
+        log(`✅ 專案建立成功！準備啟動鏡頭...`);
         
-        // 如果還沒有取得畫面，先取得預設畫面
-        if (!currentStream) await switchSource(currentSource);
+        if (!currentStream) await startVideoStream();
         
         if (currentStream) {
           document.getElementById('btnStop').disabled = false;
+          document.getElementById('btnPause').style.display = 'inline-block';
+          document.getElementById('btnStart').style.display = 'none';
+          
           isRecording = true;
           chunkIndex = 1;
           recBadge.style.display = 'block';
-          log("▶️ 開始錄製！每 1 分鐘將進行自動切割與雙軌非同步分析...");
+          log("▶️ 開始錄製！支援背景自動切片傳輸。");
           startChunkRecording();
-        } else {
-          document.getElementById('btnStart').disabled = false;
         }
       } else {
         throw new Error(res.message);
       }
     } catch (err) {
-      log("初始化失敗：" + err.message);
+      log("啟動失敗：" + err.message);
       document.getElementById('btnStart').disabled = false;
     }
   }
 
-  // === 錄製每分鐘切片的核心 ===
+  // === 會議控制：暫停與繼續 ===
+  function pauseMeeting() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.pause();
+      document.getElementById('btnPause').style.display = 'none';
+      document.getElementById('btnResume').style.display = 'inline-block';
+      recBadge.innerText = "PAUSED ⏸️";
+      recBadge.style.background = "rgba(255, 165, 0, 0.8)";
+      log("⏸️ 錄製已暫停...");
+    }
+  }
+
+  function resumeMeeting() {
+    if (mediaRecorder && mediaRecorder.state === "paused") {
+      mediaRecorder.resume();
+      document.getElementById('btnResume').style.display = 'none';
+      document.getElementById('btnPause').style.display = 'inline-block';
+      recBadge.innerText = "REC 🔴";
+      recBadge.style.background = "rgba(255, 0, 0, 0.8)";
+      log("▶️ 繼續錄製...");
+    }
+  }
+
+  // === 切片錄製核心 ===
   function startChunkRecording() {
     if (!isRecording || !currentStream) return;
     let recordedChunks = [];
@@ -198,11 +247,9 @@
     mediaRecorder.onstop = () => {
       if (recordedChunks.length > 0) {
         const blob = new Blob(recordedChunks, { type: mimeType });
-        // 呼叫上傳與辨識 (這會丟到背景執行，不會卡住前端)
         processAndUploadChunk(blob, mimeType, chunkIndex);
         chunkIndex++;
       }
-      // 確保不是因為按了「結束會議」才 stop 的，如果是中途切割，就無縫啟動下一個切片
       if (isRecording) {
         startChunkRecording(); 
       }
@@ -210,22 +257,21 @@
 
     mediaRecorder.start();
     
-    // 設定 60 秒定時器，時間到就觸發 stop() 來切割檔案
     chunkInterval = setTimeout(() => {
-      if (mediaRecorder.state === "recording") mediaRecorder.stop();
+      if (mediaRecorder.state === "recording" || mediaRecorder.state === "paused") {
+        mediaRecorder.stop();
+      }
     }, 60000); 
   }
 
-  // === 處理上傳與辨識 (雙軌背景執行) ===
+  // === 處理上傳 ===
   function processAndUploadChunk(blob, mimeType, currentIndex) {
-    log(`⏳ 第 ${currentIndex} 分鐘切片已產出。背景雙軌傳輸啟動：存檔至雲端硬碟 ＆ Gemini 辨識中... (前端持續錄製不受影響)`);
-    
+    log(`⏳ 上傳第 ${currentIndex} 分鐘切片，Gemini 進行語音與畫面辨識中...`);
     const reader = new FileReader();
     reader.readAsDataURL(blob);
     reader.onloadend = async () => {
       const base64Data = reader.result.split(',')[1];
       try {
-        // 這個 API 請求發出後，前端不用等它回應，可以繼續做自己的事
         const res = await callGasAPI({
           action: "processChunk",
           base64Data: base64Data,
@@ -234,8 +280,8 @@
           rowIndex: meetingData.rowIndex,
           chunkIndex: currentIndex
         });
-        if(res.status === 'success') log(`✅ 第 ${currentIndex} 分鐘處理完畢！已成功建檔與寫入試算表。`);
-        else log(`❌ 第 ${currentIndex} 分鐘後端處理失敗: ` + res.message);
+        if(res.status === 'success') log(`✅ 第 ${currentIndex} 分鐘辨識完成寫入試算表！`);
+        else log(`❌ 第 ${currentIndex} 分鐘處理失敗: ` + res.message);
       } catch(err) {
         log(`❌ 傳輸錯誤: ` + err.message);
       }
@@ -248,30 +294,39 @@
     clearTimeout(chunkInterval);
     recBadge.style.display = 'none';
     
-    if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+    document.getElementById('btnStop').disabled = true;
+    document.getElementById('btnPause').style.display = 'none';
+    document.getElementById('btnResume').style.display = 'none';
+    
+    if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
+      mediaRecorder.stop();
+    }
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
 
-    document.getElementById('btnStop').disabled = true;
-    log("⏹️ 會議錄製結束。正在等待最後的切片上傳完畢並請求最終 AI 總結...");
+    log("⏹️ 錄製結束。正在向 Gemini 請求最終專業會議總結，請稍候...");
     
-    // 稍微延遲 5 秒，確保最後一個切片的傳輸請求有順利發出
     setTimeout(async () => {
       try {
-        log("請求最終 AI 會議記錄總結...");
         const res = await callGasAPI({ action: "finalizeMeeting", rowIndex: meetingData.rowIndex });
         if (res.status === 'success') {
           log("🎉 會議紀錄全部完成！");
           document.getElementById('finalSummaryArea').style.display = 'block';
-          document.getElementById('finalSummary').innerText = res.data;
+          
+          // 分別填入總結與詳細逐字稿
+          document.getElementById('finalSummary').innerText = res.data.summary;
+          document.getElementById('fullDetails').innerText = res.data.details;
+          
           window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         } else {
           log("最終總結產出失敗: " + res.message);
         }
-        document.getElementById('btnStart').disabled = false;
       } catch(err) {
         log("請求最終總結發生異常: " + err.message);
-        document.getElementById('btnStart').disabled = false;
       }
+      
+      // 恢復開始按鈕狀態
+      document.getElementById('btnStart').style.display = 'inline-block';
+      document.getElementById('btnStart').disabled = false;
     }, 5000);
   }
 </script>
