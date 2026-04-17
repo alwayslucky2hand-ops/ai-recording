@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 商務會議錄製系統</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+    .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 800px; margin: auto; padding: 30px; background: white;}
+    video { width: 100%; max-height: 400px; background: #000; border-radius: 8px; margin-bottom: 20px; object-fit: contain;}
+    .log-box { height: 150px; overflow-y: auto; background: #2b2b2b; color: #4af626; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; font-size: 14px;}
+    .btn-custom { font-weight: bold; padding: 10px 20px; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2 class="text-center mb-4 text-primary">🎙️ AI 商務會議分段錄製系統</h2>
+  
+  <div class="mb-4">
+    <label class="form-label fw-bold">請輸入使用者 Email (作為建檔帳號名稱)：</label>
+    <input type="email" id="userEmail" class="form-control form-control-lg" placeholder="user@business.com">
+  </div>
+
+  <div class="d-flex justify-content-center gap-3 mb-4">
+    <button class="btn btn-primary btn-custom" id="btnStart" onclick="startMeeting()">▶️ 開始會議錄製</button>
+    <button class="btn btn-danger btn-custom" id="btnStop" onclick="stopMeeting()" disabled>⏹️ 結束會議</button>
+  </div>
+
+  <video id="mediaPlayer" autoplay muted playsinline></video>
+
+  <h5 class="fw-bold">系統狀態監控：</h5>
+  <div id="systemLog" class="log-box mb-4">系統準備就緒...<br></div>
+  
+  <div id="finalSummaryArea" class="mt-4" style="display:none;">
+    <h4 class="fw-bold text-success">📝 最終會議總結：</h4>
+    <div id="finalSummary" class="p-4 border border-success rounded bg-light" style="white-space: pre-wrap; font-size: 16px; line-height: 1.6;"></div>
+  </div>
+</div>
+
+<script>
+  // ==========================================
+  // ⚠️ 請將下方的引號內容替換成你最新部署的 GAS Web App 網址
+  // ==========================================
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzeaGu5Mq0sEe3Efow_3Yu8dYrH76YujfNYOVFZ_6wpLf-8iXQ5C0JYIcyPk7gep6sT/exec";
+
+  let currentStream, mediaRecorder, chunkInterval;
+  let recordedChunks = [];
+  let chunkIndex = 1;
+  let meetingData = { folderId: '', rowIndex: 0 };
+  let isRecording = false;
+
+  const mediaPlayer = document.getElementById('mediaPlayer');
+  const logBox = document.getElementById('systemLog');
+
+  function log(msg) {
+    const time = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+    logBox.innerHTML += `[${time}] ${msg}<br>`;
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  // 封裝與 GAS 溝通的 API (使用 text/plain 避開 CORS 預檢請求)
+  async function callGasAPI(payload) {
+    try {
+      const response = await fetch(GAS_URL, {
+        method: "POST",
+        redirect: "follow", 
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      return await response.json();
+    } catch (err) {
+      throw new Error("網路連線或 API 請求失敗：" + err.message);
+    }
+  }
+
+  async function startMeeting() {
+    const email = document.getElementById('userEmail').value;
+    if (!email) return alert("請輸入 Email！");
+
+    document.getElementById('btnStart').disabled = true;
+    log("正在向雲端請求初始化資料夾與試算表...");
+
+    try {
+      const res = await callGasAPI({ action: "initMeeting", userEmail: email });
+      if (res.status === 'success') {
+        meetingData = res.data;
+        log(`初始化完成！會議專案建立成功。`);
+        await startMedia();
+      } else {
+        throw new Error(res.message);
+      }
+    } catch (err) {
+      log("初始化失敗：" + err.message);
+      document.getElementById('btnStart').disabled = false;
+    }
+  }
+
+  async function startMedia() {
+    try {
+      const constraints = { video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true };
+      currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+      mediaPlayer.srcObject = currentStream;
+      
+      document.getElementById('btnStop').disabled = false;
+      isRecording = true;
+      chunkIndex = 1;
+
+      log("開始錄製，每 1 分鐘將進行檔案切割與後端非同步辨識...");
+      startChunkRecording();
+    } catch (err) {
+      log("無法存取鏡頭或麥克風，請檢查瀏覽器權限設定！(" + err.message + ")");
+      document.getElementById('btnStart').disabled = false;
+    }
+  }
+
+  function startChunkRecording() {
+    if (!isRecording) return;
+    recordedChunks = [];
+    
+    // 檢查瀏覽器支援格式
+    const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
+    mediaRecorder = new MediaRecorder(currentStream, { mimeType: mimeType });
+    
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      if (recordedChunks.length > 0) {
+        const blob = new Blob(recordedChunks, { type: mimeType });
+        processAndUploadChunk(blob, mimeType, chunkIndex);
+        chunkIndex++;
+      }
+      if (isRecording) startChunkRecording(); // 無縫啟動下一個切片
+    };
+
+    mediaRecorder.start();
+    chunkInterval = setTimeout(() => {
+      if (mediaRecorder.state === "recording") mediaRecorder.stop();
+    }, 60000); // 60秒切一次
+  }
+
+  function processAndUploadChunk(blob, mimeType, currentIndex) {
+    log(`正在上傳並分析第 ${currentIndex} 分鐘的切片...`);
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = async () => {
+      const base64Data = reader.result.split(',')[1];
+      try {
+        const res = await callGasAPI({
+          action: "processChunk",
+          base64Data: base64Data,
+          mimeType: mimeType,
+          folderId: meetingData.folderId,
+          rowIndex: meetingData.rowIndex,
+          chunkIndex: currentIndex
+        });
+        if(res.status === 'success') log(`✅ ${res.data}`);
+        else log(`❌ 第 ${currentIndex} 分鐘處理失敗: ` + res.message);
+      } catch(err) {
+        log(`❌ 傳輸錯誤: ` + err.message);
+      }
+    };
+  }
+
+  function stopMeeting() {
+    isRecording = false;
+    clearTimeout(chunkInterval);
+    
+    if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+    if (currentStream) currentStream.getTracks().forEach(track => track.stop());
+
+    document.getElementById('btnStop').disabled = true;
+    log("會議錄製結束。正在等待所有切片上傳完畢並請求最終 AI 總結...");
+    
+    // 延遲 5 秒等待最後一個切片傳輸
+    setTimeout(async () => {
+      try {
+        const res = await callGasAPI({ action: "finalizeMeeting", rowIndex: meetingData.rowIndex });
+        if (res.status === 'success') {
+          log("🎉 會議紀錄全部完成！");
+          document.getElementById('finalSummaryArea').style.display = 'block';
+          document.getElementById('finalSummary').innerText = res.data;
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        } else {
+          log("最終總結產出失敗: " + res.message);
+        }
+        document.getElementById('btnStart').disabled = false;
+      } catch(err) {
+        log("請求最終總結失敗: " + err.message);
+        document.getElementById('btnStart').disabled = false;
+      }
+    }, 5000);
+  }
+</script>
+
+</body>
+</html>
