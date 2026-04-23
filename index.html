@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GrowthX｜Meet & Dairy Recorder</title>
+  <title>GROWTHX｜Meet & Diary Recorder</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
@@ -137,6 +137,15 @@
     details summary:hover { background-color: #e5e5ea; }
     details summary::-webkit-details-marker { display: none; }
     .details-content { padding: 24px; font-size: 14px; line-height: 1.8; color: var(--text-muted); }
+
+    /* 📜 歷史紀錄清單卡片設計 */
+    .history-card {
+      padding: 20px; border: 1px solid var(--border); border-radius: 14px; 
+      margin-bottom: 16px; transition: all 0.2s; cursor: pointer; background: #fff;
+    }
+    .history-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0, 102, 204, 0.08); transform: translateY(-2px); }
+    .history-card-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: var(--text-muted); }
+    .history-card-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin: 0; }
   </style>
 </head>
 <body>
@@ -144,7 +153,7 @@
 <div class="card-premium">
   <div class="d-flex align-items-center justify-content-center gap-3 mb-5">
     <i data-lucide="layers" style="width: 32px; height: 32px; color: var(--primary);"></i>
-    <h2 class="m-0 fw-bold" style="color: var(--primary); letter-spacing: -0.8px; font-size: 28px;">GrowthX｜Meet & Dairy</h2>
+    <h2 class="m-0 fw-bold" style="color: var(--primary); letter-spacing: -0.8px; font-size: 28px;">GROWTHX｜Meet & Diary Recorder</h2>
   </div>
   
   <div class="video-container" id="videoContainer">
@@ -179,9 +188,14 @@
   <div id="step-setup" class="step-section active">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h5 class="fw-bold m-0" style="color: var(--text-main); font-size: 18px;">設定會議資訊</h5>
-      <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="resetApp()">
-        <i data-lucide="rotate-ccw" style="width:14px;"></i> 重置系統
-      </button>
+      <div class="d-flex gap-2">
+        <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="loadHistoryView()">
+          <i data-lucide="clock" style="width:14px;"></i> 歷史紀錄
+        </button>
+        <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="resetApp()">
+          <i data-lucide="rotate-ccw" style="width:14px;"></i> 重置系統
+        </button>
+      </div>
     </div>
     <div class="mb-4">
       <label class="form-label">工作信箱 (會議記錄人)</label>
@@ -198,6 +212,24 @@
     <button class="btn-brand w-100 mt-2" id="btnStartSetup" onclick="startMeeting()">
       <i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製
     </button>
+  </div>
+
+  <div id="step-history" class="step-section">
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+      <h5 class="fw-bold m-0" style="color: var(--text-main); font-size: 18px;">調閱歷史紀錄</h5>
+      <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="switchStep('step-setup')">
+        <i data-lucide="arrow-left" style="width:14px;"></i> 返回設定
+      </button>
+    </div>
+    <p class="text-muted" style="font-size: 14px;">請輸入您的工作信箱，系統將自動調閱屬於您的會議紀錄。</p>
+    <div class="d-flex gap-2 mb-4">
+      <input type="email" id="historyEmail" class="form-control form-control-lg" placeholder="name@company.com">
+      <button class="btn-brand" id="btnFetchHistory" style="padding: 0 24px;" onclick="fetchHistory()">
+        <i data-lucide="search" style="width:18px;"></i>
+      </button>
+    </div>
+    <div id="historyList" style="max-height: 400px; overflow-y: auto; padding-right: 4px;">
+      </div>
   </div>
 
   <div id="step-recording" class="step-section">
@@ -242,7 +274,7 @@
 </div>
 
 <div class="text-center mt-5 mb-4" style="font-size: 13px; color: var(--text-muted); font-weight: 500;">
-  Designed with precision. GrowthX｜微企AI學院
+  Designed with precision. GROWTHX｜Meet & Diary Recorder
 </div>
 
 <script>
@@ -339,7 +371,6 @@
     if (document.getElementById('step-setup').classList.contains('active')) {
       try {
         await acquireStream();
-        console.log("[系統] 設備授權成功");
       } catch (err) {
         console.log("[錯誤] 請允許瀏覽器存取麥克風與相機權限");
       }
@@ -450,6 +481,110 @@
     }
   }
 
+  // ------------------------------------------
+  // ✨ 新增：歷史紀錄調閱邏輯
+  // ------------------------------------------
+  function loadHistoryView() {
+    document.getElementById('historyEmail').value = document.getElementById('setupEmail').value;
+    document.getElementById('historyList').innerHTML = '';
+    switchStep('step-history');
+  }
+
+  async function fetchHistory() {
+    const email = document.getElementById('historyEmail').value;
+    if (!email) return alert("請輸入工作信箱進行查詢");
+
+    const btn = document.getElementById('btnFetchHistory');
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader" class="pulse-dot" style="background:none;"></i>`;
+    lucide.createIcons();
+
+    try {
+      const res = await callGasAPI({ action: "fetchHistory", email: email });
+      if (res.status === 'success' && res.data.length > 0) {
+        let html = '';
+        res.data.forEach(item => {
+          // 將 JSON 資料編碼，避免引號破壞 HTML 屬性
+          const itemJson = encodeURIComponent(JSON.stringify(item));
+          html += `
+            <div class="history-card" onclick="loadHistoryItem('${itemJson}')">
+              <div class="history-card-header">
+                <span><i data-lucide="calendar" style="width:14px; margin-right:4px;"></i>${item.date} ${item.time}</span>
+                <span style="color: var(--accent); font-weight: 500;">載入紀錄</span>
+              </div>
+              <h4 class="history-card-title">${item.company} 專案會議</h4>
+            </div>
+          `;
+        });
+        document.getElementById('historyList').innerHTML = html;
+        lucide.createIcons();
+      } else {
+        document.getElementById('historyList').innerHTML = `<div class="text-center text-muted p-4">查無此信箱的會議紀錄</div>`;
+      }
+    } catch (err) {
+      alert("查詢失敗：" + err.message);
+    }
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="search" style="width:18px;"></i>`;
+    lucide.createIcons();
+  }
+
+  function loadHistoryItem(encodedJson) {
+    const item = JSON.parse(decodeURIComponent(encodedJson));
+    
+    meetingData = { rowIndex: item.rowIndex, folderId: "", meetingName: "歷史調閱_" + item.company };
+    document.getElementById('setupEmail').value = document.getElementById('historyEmail').value;
+    
+    // 渲染歷史文字 (套用相同的排版引擎)
+    renderBeautifulText(item.summary, item.details, item.urls);
+    
+    document.getElementById('playerControls').style.display = 'none';
+    switchStep('step-result');
+  }
+
+  // ------------------------------------------
+  // ✨ 極致排版引擎 (消除所有 Markdown)
+  // ------------------------------------------
+  function renderBeautifulText(rawSummary, rawDetails, videoUrls) {
+    rawSummary = rawSummary || "";
+    rawDetails = rawDetails || "";
+    videoUrls = videoUrls || "無影音檔案紀錄";
+    
+    // 徹底替換所有的 Markdown，轉換為 HTML 標籤與行內樣式
+    let formattedSummary = rawSummary
+      // 處理 ### 標題
+      .replace(/###\s*(.*?)(?=\n|$)/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>")
+      // 處理 【】 標題
+      .replace(/【(.*?)】/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>")
+      // 處理 **粗體**
+      .replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--accent);'>$1</strong>")
+      // 處理 * 單星號粗體或清單 (如果是行首的*則視為清單)
+      .replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px;'><span style='position: absolute; left: 0; color: var(--accent);'>•</span>$1</div>")
+      // 處理剩餘不在行首的 *標題*
+      .replace(/\*(.*?)\*/g, "<strong style='color: var(--primary);'>$1</strong>")
+      // 處理換行
+      .replace(/\n/g, "<br>");
+
+    let formattedDetails = rawDetails
+      // 處理分鐘區隔
+      .replace(/--- 第 (.*?) 分鐘紀錄 ---/g, "<strong style='color: var(--primary); display:block; margin-top:16px; margin-bottom:4px; border-bottom: 1px solid var(--border); padding-bottom: 4px;'>--- 第 $1 分鐘紀錄 ---</strong>")
+      // 處理逐字稿中的 **粗體**
+      .replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--text-main); font-weight: 600;'>$1</strong>")
+      // 處理逐字稿清單
+      .replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px; font-size: 13.5px;'><span style='position: absolute; left: 0; color: var(--text-muted);'>•</span>$1</div>")
+      .replace(/\n/g, "<br>");
+
+    const finalContent = formattedSummary + "<br><h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>📁 公開雲端影音檔案連結</h3><a href='" + (videoUrls.startsWith('http') ? videoUrls : '#') + "' target='_blank' style='color: var(--accent); text-decoration: none; word-break: break-all;'>" + videoUrls + "</a>";
+    
+    document.getElementById('finalSummary').innerHTML = finalContent;
+    document.getElementById('fullDetails').innerHTML = formattedDetails;
+    
+    saveState({ step: 'step-result', meetingData: meetingData });
+  }
+
+  // ------------------------------------------
+  // 核心錄影與會議邏輯
+  // ------------------------------------------
   async function startMeeting() {
     const email = document.getElementById('setupEmail').value;
     const company = document.getElementById('setupCompany').value;
@@ -597,29 +732,8 @@
       const res = await callGasAPI({ action: "finalizeMeeting", rowIndex: meetingData.rowIndex, email: document.getElementById('setupEmail').value });
       if (res.status === 'success') {
         switchStep('step-result'); 
-        
-        // 🌟 自動化排版引擎：將後端的純文字資料，自動轉換為 Apple 質感的 HTML 排版
-        let rawSummary = res.data.summary || "";
-        let rawDetails = res.data.details || "";
-        let videoUrls = res.data.videoUrls || "無影音檔案紀錄";
-        
-        // 替換重點標題、加粗、換行符號，完美保持 UIUX
-        let formattedSummary = rawSummary
-          .replace(/\n/g, "<br>")
-          .replace(/【(.*?)】/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>")
-          .replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--accent);'>$1</strong>")
-          .replace(/\*(.*?)\*/g, "<strong style='color: var(--primary);'>$1</strong>");
-
-        let formattedDetails = rawDetails
-          .replace(/\n/g, "<br>")
-          .replace(/--- 第 (.*?) 分鐘紀錄 ---/g, "<strong style='color: var(--primary); display:block; margin-top:16px; margin-bottom:4px; border-bottom: 1px solid var(--border); padding-bottom: 4px;'>--- 第 $1 分鐘紀錄 ---</strong>");
-
-        const finalContent = formattedSummary + "<br><h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>📁 公開雲端影音檔案連結</h3><a href='" + (videoUrls.startsWith('http') ? videoUrls : '#') + "' target='_blank' style='color: var(--accent); text-decoration: none; word-break: break-all;'>" + videoUrls + "</a>";
-        
-        document.getElementById('finalSummary').innerHTML = finalContent;
-        document.getElementById('fullDetails').innerHTML = formattedDetails;
-        
-        saveState({ step: 'step-result', meetingData: meetingData });
+        // 🌟 呼叫完美排版引擎
+        renderBeautifulText(res.data.summary, res.data.details, res.data.videoUrls);
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       } else {
         log("[錯誤] 總結失敗: " + res.message);
@@ -642,8 +756,7 @@
     btn.innerHTML = `<i data-lucide="loader" style="width:18px;"></i> 儲存中...`;
     lucide.createIcons();
     
-    // 將修改後的 HTML 取出，準備傳給後端
-    const newSummary = document.getElementById('finalSummary').innerText; // 取純文字回傳，或是 .innerHTML 依你需求
+    const newSummary = document.getElementById('finalSummary').innerText; 
     try {
       await callGasAPI({ action: "updateSummary", rowIndex: meetingData.rowIndex, newSummary: newSummary });
       showFeedback("變更已完美同步至資料庫");
