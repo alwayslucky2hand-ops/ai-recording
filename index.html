@@ -291,6 +291,11 @@
   let chunkIndex = 1;
   let meetingData = { folderId: '', rowIndex: 0, meetingName: '' };
   
+  // 🌟 新增：全域記憶體，安全儲存歷史資料，杜絕報錯
+  let globalHistoryData = []; 
+  // 🌟 新增：背景備份最原始的逐字稿，確保 Google Doc 匯出時一字不漏
+  window.rawMeetingDetails = ""; 
+  
   let isRecording = false;
   let isPaused = false; 
   let isVideoEnabled = false; 
@@ -482,7 +487,7 @@
   }
 
   // ------------------------------------------
-  // ✨ 新增：歷史紀錄調閱邏輯
+  // ✨ 優化版：歷史紀錄調閱邏輯 (零報錯)
   // ------------------------------------------
   function loadHistoryView() {
     document.getElementById('historyEmail').value = document.getElementById('setupEmail').value;
@@ -502,12 +507,14 @@
     try {
       const res = await callGasAPI({ action: "fetchHistory", email: email });
       if (res.status === 'success' && res.data.length > 0) {
+        // 🌟 將資料存入全域陣列，不直接放入 HTML
+        globalHistoryData = res.data;
         let html = '';
-        res.data.forEach(item => {
-          // 將 JSON 資料編碼，避免引號破壞 HTML 屬性
-          const itemJson = encodeURIComponent(JSON.stringify(item));
+        
+        // 🌟 點擊時只傳遞陣列的「數字編號 (index)」，絕不會發生引號衝突錯誤
+        globalHistoryData.forEach((item, index) => {
           html += `
-            <div class="history-card" onclick="loadHistoryItem('${itemJson}')">
+            <div class="history-card" onclick="loadHistoryItem(${index})">
               <div class="history-card-header">
                 <span><i data-lucide="calendar" style="width:14px; margin-right:4px;"></i>${item.date} ${item.time}</span>
                 <span style="color: var(--accent); font-weight: 500;">載入紀錄</span>
@@ -529,13 +536,13 @@
     lucide.createIcons();
   }
 
-  function loadHistoryItem(encodedJson) {
-    const item = JSON.parse(decodeURIComponent(encodedJson));
+  // 🌟 透過 Index 編號提取記憶體資料
+  function loadHistoryItem(index) {
+    const item = globalHistoryData[index];
     
     meetingData = { rowIndex: item.rowIndex, folderId: "", meetingName: "歷史調閱_" + item.company };
     document.getElementById('setupEmail').value = document.getElementById('historyEmail').value;
     
-    // 渲染歷史文字 (套用相同的排版引擎)
     renderBeautifulText(item.summary, item.details, item.urls);
     
     document.getElementById('playerControls').style.display = 'none';
@@ -550,27 +557,21 @@
     rawDetails = rawDetails || "";
     videoUrls = videoUrls || "無影音檔案紀錄";
     
-    // 徹底替換所有的 Markdown，轉換為 HTML 標籤與行內樣式
+    // 🌟 在背景將最完整的原始資料保存起來，防止 HTML 隱藏標籤抓不到字！
+    window.rawMeetingDetails = rawDetails;
+
+    // 徹底替換所有的 Markdown，轉換為 HTML 標籤與行內樣式供畫面上看
     let formattedSummary = rawSummary
-      // 處理 ### 標題
       .replace(/###\s*(.*?)(?=\n|$)/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>")
-      // 處理 【】 標題
       .replace(/【(.*?)】/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>")
-      // 處理 **粗體**
       .replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--accent);'>$1</strong>")
-      // 處理 * 單星號粗體或清單 (如果是行首的*則視為清單)
       .replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px;'><span style='position: absolute; left: 0; color: var(--accent);'>•</span>$1</div>")
-      // 處理剩餘不在行首的 *標題*
       .replace(/\*(.*?)\*/g, "<strong style='color: var(--primary);'>$1</strong>")
-      // 處理換行
       .replace(/\n/g, "<br>");
 
     let formattedDetails = rawDetails
-      // 處理分鐘區隔
       .replace(/--- 第 (.*?) 分鐘紀錄 ---/g, "<strong style='color: var(--primary); display:block; margin-top:16px; margin-bottom:4px; border-bottom: 1px solid var(--border); padding-bottom: 4px;'>--- 第 $1 分鐘紀錄 ---</strong>")
-      // 處理逐字稿中的 **粗體**
       .replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--text-main); font-weight: 600;'>$1</strong>")
-      // 處理逐字稿清單
       .replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px; font-size: 13.5px;'><span style='position: absolute; left: 0; color: var(--text-muted);'>•</span>$1</div>")
       .replace(/\n/g, "<br>");
 
@@ -621,7 +622,7 @@
         }
       } else throw new Error(res.message);
     } catch (err) {
-      alert("啟動失敗：" + err.message);
+      alert("啟怒失敗：" + err.message);
       const btn = document.getElementById('btnStartSetup');
       btn.disabled = false;
       btn.innerHTML = `<i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製`;
@@ -732,7 +733,6 @@
       const res = await callGasAPI({ action: "finalizeMeeting", rowIndex: meetingData.rowIndex, email: document.getElementById('setupEmail').value });
       if (res.status === 'success') {
         switchStep('step-result'); 
-        // 🌟 呼叫完美排版引擎
         renderBeautifulText(res.data.summary, res.data.details, res.data.videoUrls);
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       } else {
@@ -776,7 +776,15 @@
     lucide.createIcons();
     
     const summaryText = document.getElementById('finalSummary').innerText;
-    const detailsText = document.getElementById('fullDetails').innerText;
+    
+    // 🌟 從我們安全的背景記憶體抓取最原始、最完整的逐字稿，杜絕隱藏標籤導致遺失！
+    let detailsText = window.rawMeetingDetails || document.getElementById('fullDetails').innerText;
+    
+    // 🌟 在送出給 Google Doc 之前，徹底剝除所有的 Markdown 符號
+    detailsText = detailsText
+      .replace(/\*\*(.*?)\*\*/g, "$1") // 剝除粗體星號
+      .replace(/###\s*(.*?)(?=\n|$)/g, "$1") // 剝除標題井號
+      .replace(/^\*\s+(.*)/gm, "• $1"); // 把單星號換成漂亮的圓點清單
     
     try {
       const res = await callGasAPI({ action: "createDoc", meetingName: meetingData.meetingName, summary: summaryText, details: detailsText, folderId: meetingData.folderId });
