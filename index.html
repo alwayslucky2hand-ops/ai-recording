@@ -7,74 +7,152 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
+    /* 🍏 Apple-inspired 視覺美學變數 */
     :root { 
-      --primary: #0f172a; 
-      --primary-hover: #334155;
-      --accent: #2563eb;
+      --primary: #1d1d1f; 
+      --primary-hover: #434344;
+      --accent: #0066cc; /* Apple Blue */
+      --accent-hover: #0077ed;
       --surface: #ffffff; 
-      --bg: #f8fafc; 
-      --border: #e2e8f0;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
+      --bg: #f5f5f7; /* Apple 經典灰底 */
+      --border: #d2d2d7;
+      --text-main: #1d1d1f;
+      --text-muted: #86868b;
+      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    body { background-color: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; color: var(--text-main); }
     
-    .card-premium { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,0.03); max-width: 800px; margin: auto; padding: 40px; transition: all 0.3s ease; }
+    body { 
+      background-color: var(--bg); 
+      font-family: var(--font-family); 
+      padding: 40px 20px; 
+      color: var(--text-main); 
+      -webkit-font-smoothing: antialiased;
+    }
     
-    .step-section { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
-    .step-section.active { display: block; opacity: 1; }
+    /* 📦 頂級質感卡片 */
+    .card-premium { 
+      background: var(--surface); 
+      border-radius: 24px; 
+      border: none; 
+      box-shadow: 0 10px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.02); 
+      max-width: 800px; 
+      margin: auto; 
+      padding: 48px; 
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); 
+    }
     
-    /* 媒體播放器區域 */
-    .video-container { position: relative; width: 100%; max-height: 450px; background: #000; border-radius: 12px; margin-bottom: 24px; overflow: hidden; }
-    video { width: 100%; height: 100%; object-fit: contain; }
+    .step-section { display: none; opacity: 0; transition: opacity 0.5s ease-in-out; }
+    .step-section.active { display: block; opacity: 1; animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
-    /* 錄影紅點徽章 (純CSS) */
-    .status-badge { position: absolute; top: 16px; right: 16px; background: rgba(220, 38, 38, 0.9); color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 13px; display: none; z-index: 10; letter-spacing: 0.5px; align-items: center; gap: 6px; }
-    .pulse-dot { width: 8px; height: 8px; background-color: white; border-radius: 50%; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
+    /* 🎬 媒體播放器區域 - 劇院級呈現 */
+    .video-container { 
+      position: relative; 
+      width: 100%; 
+      max-height: 480px; 
+      background: #000; 
+      border-radius: 18px; 
+      margin-bottom: 32px; 
+      overflow: hidden; 
+      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+    video { width: 100%; height: 100%; object-fit: cover; }
     
-    /* 懸浮控制列 */
-    .controls-overlay { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); padding: 12px 24px; border-radius: 100px; display: flex; gap: 20px; align-items: center; opacity: 0; transition: opacity 0.4s ease; z-index: 20; }
+    /* 🔴 錄影紅點徽章 */
+    .status-badge { 
+      position: absolute; top: 20px; right: 20px; 
+      background: rgba(255, 59, 48, 0.95); /* Apple Red */
+      backdrop-filter: blur(4px);
+      color: white; padding: 6px 14px; border-radius: 99px; 
+      font-weight: 600; font-size: 12px; display: none; z-index: 10; 
+      letter-spacing: 0.8px; align-items: center; gap: 8px; 
+      box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+    }
+    .pulse-dot { width: 8px; height: 8px; background-color: white; border-radius: 50%; animation: pulse 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1); }
+    @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.8); opacity: 0.5; } }
+    
+    /* 🎛️ 懸浮控制列 - 毛玻璃美學 */
+    .controls-overlay { 
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); 
+      background: rgba(29, 29, 31, 0.75); 
+      backdrop-filter: saturate(180%) blur(20px); 
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      padding: 12px 28px; border-radius: 999px; display: flex; gap: 24px; align-items: center; 
+      opacity: 0; transition: opacity 0.4s ease; z-index: 20; 
+    }
     .video-container.active-controls .controls-overlay { opacity: 1; }
     
-    .control-btn { background: none; border: none; color: white; cursor: pointer; padding: 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; outline: none; }
-    .control-btn:hover { background: rgba(255, 255, 255, 0.2); }
-    .control-btn.stop-btn:hover { background: rgba(239, 68, 68, 0.9); color: white; }
-    .control-btn.pause-btn:hover { background: rgba(245, 158, 11, 0.9); color: white; }
-    .control-btn.play-btn:hover { background: rgba(16, 185, 129, 0.9); color: white; }
-    .control-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .control-btn { background: none; border: none; color: white; cursor: pointer; padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.25s; outline: none; }
+    .control-btn:hover { background: rgba(255, 255, 255, 0.15); transform: scale(1.05); }
+    .control-btn.stop-btn:hover { background: rgba(255, 59, 48, 0.9); }
+    .control-btn.pause-btn:hover { background: rgba(255, 149, 0, 0.9); } /* Apple Orange */
+    .control-btn.play-btn:hover { background: rgba(52, 199, 89, 0.9); } /* Apple Green */
+    .control-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
     .control-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); }
 
-    /* 表單與按鈕設計 */
-    .form-control-lg { border-radius: 8px; border: 1px solid var(--border); padding: 14px 16px; font-size: 15px; box-shadow: none; }
-    .form-control-lg:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    /* 📝 表單與按鈕設計 */
+    .form-label { font-weight: 600; color: var(--text-main); font-size: 14px; margin-bottom: 8px; letter-spacing: 0.3px;}
+    .form-control-lg { 
+      border-radius: 12px; border: 1.5px solid var(--border); padding: 16px; 
+      font-size: 15px; background-color: rgba(255,255,255,0.8); box-shadow: none; transition: all 0.3s; 
+    }
+    .form-control-lg:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.15); background-color: #fff; outline: none; }
     
-    .btn-brand { background-color: var(--primary); color: white; font-weight: 500; padding: 12px 24px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-    .btn-brand:hover:not(:disabled) { background-color: var(--primary-hover); color: white; }
-    .btn-brand:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+    .btn-brand { 
+      background-color: var(--primary); color: white; font-weight: 600; font-size: 15px; 
+      padding: 14px 28px; border-radius: 12px; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s; 
+    }
+    .btn-brand:hover:not(:disabled) { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .btn-brand:disabled { background-color: #e5e5ea; color: #aeaeb2; cursor: not-allowed; transform: none; box-shadow: none; }
     
-    .btn-outline { background-color: transparent; color: var(--primary); border: 1px solid var(--border); font-weight: 500; padding: 10px 20px; border-radius: 8px; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-    .btn-outline:hover:not(:disabled) { background-color: #f1f5f9; }
+    .btn-outline { 
+      background-color: transparent; color: var(--primary); border: 1.5px solid var(--border); 
+      font-weight: 600; font-size: 14px; padding: 10px 20px; border-radius: 10px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; 
+    }
+    .btn-outline:hover:not(:disabled) { background-color: var(--bg); border-color: var(--text-main); }
     
-    /* 日誌與結果區域 */
-    .log-box { height: 160px; overflow-y: auto; background: #f8fafc; color: var(--text-muted); padding: 16px; border-radius: 8px; border: 1px solid var(--border); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; line-height: 1.6; }
+    /* 🗂️ 日誌與精美結果區域 */
+    .log-box { 
+      height: 140px; overflow-y: auto; background: var(--primary); color: #4ade80; 
+      padding: 16px; border-radius: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; 
+      font-size: 13px; line-height: 1.6; box-shadow: inset 0 2px 8px rgba(0,0,0,0.2); 
+    }
     
-    .result-editor { width: 100%; min-height: 350px; padding: 20px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-size: 14px; line-height: 1.8; color: var(--text-main); resize: vertical; outline: none; transition: border 0.2s; }
-    .result-editor:focus { border-color: var(--accent); }
+    /* 🌟 HTML 內容展示區：為了達成賈伯斯的排版要求，允許 div 接收富文本 */
+    .result-editor { 
+      width: 100%; min-height: 350px; padding: 24px; border: 1.5px solid var(--border); 
+      border-radius: 16px; background: #fff; font-size: 15px; line-height: 1.9; 
+      color: var(--text-main); outline: none; transition: all 0.3s; overflow-y: auto;
+    }
+    .result-editor:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.15); }
+    /* 美化編輯器內的 HTML 標籤 */
+    .result-editor h1, .result-editor h2, .result-editor h3 { font-weight: 700; color: var(--primary); margin-top: 24px; margin-bottom: 12px; }
+    .result-editor ul { padding-left: 24px; margin-bottom: 16px; }
+    .result-editor li { margin-bottom: 8px; }
+    .result-editor strong { color: var(--accent); font-weight: 600; }
     
-    .url-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; }
-    .url-text { flex-grow: 1; font-family: monospace; font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .url-box { display: flex; align-items: center; gap: 12px; background: var(--bg); padding: 14px 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px; }
+    .url-text { flex-grow: 1; font-family: ui-monospace, SFMono-Regular, monospace; font-size: 14px; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;}
     
-    details summary { cursor: pointer; padding: 16px; background-color: var(--bg); border-radius: 8px; font-weight: 500; color: var(--text-main); border: 1px solid var(--border); list-style: none; display: flex; align-items: center; gap: 8px; }
+    details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    details summary { 
+      cursor: pointer; padding: 18px 20px; background-color: var(--bg); 
+      font-weight: 600; color: var(--text-main); list-style: none; display: flex; align-items: center; gap: 10px; transition: background 0.2s;
+    }
+    details summary:hover { background-color: #e5e5ea; }
     details summary::-webkit-details-marker { display: none; }
+    .details-content { padding: 24px; font-size: 14px; line-height: 1.8; color: var(--text-muted); }
+    /* 美化細節內的 HTML */
+    .details-content strong { color: var(--primary); }
+    .details-content span.highlight { color: #d97706; font-weight: 500; background: #fef3c7; padding: 2px 6px; border-radius: 4px;}
   </style>
 </head>
 <body>
 
 <div class="card-premium">
-  <div class="d-flex align-items-center justify-content-center gap-2 mb-4">
-    <i data-lucide="layers" style="width: 28px; height: 28px; color: var(--primary);"></i>
-    <h2 class="m-0 fw-bold" style="color: var(--primary); letter-spacing: -0.5px;">GrowthX｜Meet & Dairy Recorder</h2>
+  <div class="d-flex align-items-center justify-content-center gap-3 mb-5">
+    <i data-lucide="layers" style="width: 32px; height: 32px; color: var(--primary);"></i>
+    <h2 class="m-0 fw-bold" style="color: var(--primary); letter-spacing: -0.8px; font-size: 28px;">GrowthX｜Meet & Dairy</h2>
   </div>
   
   <div class="video-container" id="videoContainer">
@@ -86,8 +164,8 @@
     
     <div class="controls-overlay" id="playerControls">
       <button class="control-btn" id="btnSwitchSource" onclick="switchSourceAction()" title="切換鏡頭/螢幕">
-  <i data-lucide="switch-camera" id="icon-source"></i>
-</button>
+        <i data-lucide="switch-camera" id="icon-source"></i>
+      </button>
       <button class="control-btn" id="btnToggleVideo" onclick="toggleVideo()" title="開啟/關閉畫面">
         <i data-lucide="video-off" id="icon-video"></i>
       </button>
@@ -107,71 +185,73 @@
   </div>
 
   <div id="step-setup" class="step-section active">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold text-primary m-0">設定會議資訊</h5>
-      <button class="btn-outline py-1 px-2" style="font-size: 13px;" onclick="resetApp()">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="fw-bold m-0" style="color: var(--text-main); font-size: 18px;">設定會議資訊</h5>
+      <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="resetApp()">
         <i data-lucide="rotate-ccw" style="width:14px;"></i> 重置系統
       </button>
     </div>
     <div class="mb-4">
-      <label class="form-label fw-bold text-secondary">工作信箱 (會議記錄人)</label>
+      <label class="form-label">工作信箱 (會議記錄人)</label>
       <input type="email" id="setupEmail" class="form-control form-control-lg" placeholder="name@company.com" oninput="saveState()">
     </div>
     <div class="mb-4">
-      <label class="form-label fw-bold text-secondary">所屬單位</label>
+      <label class="form-label">所屬單位</label>
       <input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：產品研發部" oninput="saveState()">
     </div>
     <div class="mb-4">
-      <label class="form-label fw-bold text-secondary">與會人員</label>
+      <label class="form-label">與會人員</label>
       <textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="請輸入參與者姓名..." oninput="saveState()"></textarea>
     </div>
-    <button class="btn-brand w-100" id="btnStartSetup" onclick="startMeeting()">
+    <button class="btn-brand w-100 mt-2" id="btnStartSetup" onclick="startMeeting()">
       <i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製
     </button>
   </div>
 
   <div id="step-recording" class="step-section">
-    <label class="form-label fw-bold text-secondary fs-6">系統執行日誌</label>
+    <label class="form-label fs-6 mt-2">系統執行日誌</label>
     <div id="systemLog" class="log-box mb-2">系統啟動中...<br></div>
   </div>
   
   <div id="step-result" class="step-section mt-2">
-    <div class="mb-4 mt-3">
-      <div class="d-flex justify-content-between align-items-end mb-2">
-        <label class="form-label fw-bold text-secondary m-0">專業會議總結 (可自由編輯)</label>
-        <button class="btn-outline py-1 px-2" style="font-size: 13px;" onclick="resetApp()">
-          <i data-lucide="rotate-ccw" style="width:14px;"></i> 重置系統
+    <div class="mb-4 mt-4">
+      <div class="d-flex justify-content-between align-items-end mb-3">
+        <label class="form-label m-0 fs-5" style="color: var(--primary);">專業會議總結</label>
+        <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="resetApp()">
+          <i data-lucide="rotate-ccw" style="width:14px;"></i> 重置
         </button>
       </div>
-      <textarea id="finalSummary" class="result-editor" oninput="saveState()"></textarea>
+      <div id="finalSummary" class="result-editor" contenteditable="true" oninput="saveState()"></div>
       
-      <div class="d-flex gap-2 mt-3 justify-content-end flex-wrap">
+      <div class="d-flex gap-3 mt-4 justify-content-end flex-wrap">
         <button class="btn-outline" onclick="saveSummary()" id="btnSaveSummary">
-          <i data-lucide="save" style="width:16px;"></i> 儲存至資料庫
+          <i data-lucide="save" style="width:18px;"></i> 儲存至資料庫
         </button>
         <button class="btn-brand" onclick="exportToDoc()" id="btnExportDoc">
-          <i data-lucide="file-text" style="width:16px;"></i> 建立 Google 文件
+          <i data-lucide="file-text" style="width:18px;"></i> 建立 Google 文件
         </button>
       </div>
-      <div id="actionFeedback" class="text-end mt-2 fs-6 text-success" style="height: 20px;"></div>
+      <div id="actionFeedback" class="text-end mt-2 fs-6 fw-medium" style="height: 20px; color: var(--accent);"></div>
     </div>
     
     <div id="docLinkArea" style="display:none;" class="mb-4">
       <div class="url-box">
-        <i data-lucide="file-text" style="width:16px; color: var(--accent);"></i>
+        <i data-lucide="file-text" style="width:20px; color: var(--accent);"></i>
         <div class="url-text" id="docUrlText">載入中...</div>
-        <button class="btn-outline" style="padding: 6px 12px; font-size: 13px;" onclick="copyToClipboard('docUrlText')">複製</button>
+        <button class="btn-outline" style="padding: 6px 14px; font-size: 13px;" onclick="copyToClipboard('docUrlText')">複製連結</button>
       </div>
     </div>
     
     <details class="mt-4">
-      <summary><i data-lucide="chevron-down" style="width:18px;"></i> 檢視完整畫面描述與逐字稿</summary>
-      <div id="fullDetails" class="p-3 mt-2 border rounded bg-white text-muted" style="white-space: pre-wrap; font-size: 13px; line-height: 1.6; max-height: 400px; overflow-y: auto;"></div>
+      <summary><i data-lucide="chevron-down" style="width:20px; color: var(--accent);"></i> 檢視完整畫面描述與逐字稿</summary>
+      <div id="fullDetails" class="details-content"></div>
     </details>
   </div>
 </div>
 
-<div class="text-center mt-5 text-muted" style="font-size: 13px;">All Copyright recieved by ... GrowthX｜微企AI學院</div>
+<div class="text-center mt-5 mb-4" style="font-size: 13px; color: var(--text-muted); font-weight: 500;">
+  Designed with precision. GrowthX｜微企AI學院
+</div>
 
 <script>
   lucide.createIcons();
@@ -210,8 +290,9 @@
       email: document.getElementById('setupEmail').value,
       company: document.getElementById('setupCompany').value,
       attendees: document.getElementById('setupAttendees').value,
-      finalSummary: document.getElementById('finalSummary').value,
-      fullDetails: document.getElementById('fullDetails').innerText,
+      // 🌟 改為抓取 innerHTML 完美保留 HTML 排版
+      finalSummary: document.getElementById('finalSummary').innerHTML,
+      fullDetails: document.getElementById('fullDetails').innerHTML,
       docUrl: document.getElementById('docUrlText').innerText,
       ...overrides
     };
@@ -227,10 +308,11 @@
       document.getElementById('setupAttendees').value = state.attendees || '';
       
       if (state.step === 'step-result') {
-        document.getElementById('finalSummary').value = state.finalSummary || '';
-        document.getElementById('fullDetails').innerText = state.fullDetails || '';
+        // 🌟 寫回 innerHTML 確保美感不流失
+        document.getElementById('finalSummary').innerHTML = state.finalSummary || '';
+        document.getElementById('fullDetails').innerHTML = state.fullDetails || '';
         if (state.docUrl && state.docUrl !== '載入中...') {
-          document.getElementById('docLinkArea').style.display = 'block';
+          document.getElementById('docLinkArea').style.display = 'flex';
           document.getElementById('docUrlText').innerText = state.docUrl;
         }
         meetingData = state.meetingData || {};
@@ -254,20 +336,18 @@
     clearTimeout(hideControlsTimeout);
     hideControlsTimeout = setTimeout(() => {
       videoContainer.classList.remove('active-controls');
-    }, 2500);
+    }, 3000); // 稍微延長顯示時間讓使用者更好操作
   }
   videoContainer.addEventListener('mousemove', wakeControls);
   videoContainer.addEventListener('click', wakeControls);
   videoContainer.addEventListener('touchstart', wakeControls);
 
   window.onload = async () => {
-    // 將這裡固定設定為 switch-camera，不再因為裝置不同而變成手機或螢幕的圖示
     document.getElementById('icon-source').setAttribute('data-lucide', 'switch-camera');
     lucide.createIcons();
     wakeControls(); 
-    loadState(); // 載入記憶資料
+    loadState(); 
     
-    // 如果不是停留在結果頁，要求權限
     if (document.getElementById('step-setup').classList.contains('active')) {
       try {
         await acquireStream();
@@ -315,11 +395,11 @@
     const constraints = { audio: true };
     try {
       if (isMobile) {
-        constraints.video = { facingMode: mobileFacingMode, width: { ideal: 854 }, height: { ideal: 480 } };
+        constraints.video = { facingMode: mobileFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } }; // 升級畫質
         currentStream = await navigator.mediaDevices.getUserMedia(constraints);
       } else {
         if (desktopSource === "camera") {
-          constraints.video = { width: { ideal: 854 }, height: { ideal: 480 } };
+          constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 } }; // 升級畫質
           currentStream = await navigator.mediaDevices.getUserMedia(constraints);
         } else {
           currentStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
@@ -435,7 +515,7 @@
       
       document.getElementById('btnPause').style.display = 'none';
       document.getElementById('btnResume').style.display = 'flex';
-      recBadge.style.background = "#f59e0b";
+      recBadge.style.background = "rgba(255, 149, 0, 0.95)"; /* Apple Orange */
       document.getElementById('recText').innerText = "PAUSED";
     }
   }
@@ -448,7 +528,7 @@
       
       document.getElementById('btnResume').style.display = 'none';
       document.getElementById('btnPause').style.display = 'flex';
-      recBadge.style.background = "rgba(220, 38, 38, 0.9)";
+      recBadge.style.background = "rgba(255, 59, 48, 0.95)"; /* Apple Red */
       document.getElementById('recText').innerText = "REC";
     }
   }
@@ -530,9 +610,11 @@
       if (res.status === 'success') {
         switchStep('step-result'); 
         
-        const finalContent = res.data.summary + "\n\n【公開雲端影音檔案連結】\n" + (res.data.videoUrls || "無影音檔案紀錄");
-        document.getElementById('finalSummary').value = finalContent;
-        document.getElementById('fullDetails').innerText = res.data.details;
+        // 🌟 透過 innerHTML 寫入富文本，達成賈伯斯級別的排版
+        const finalContent = res.data.summary + "<br><br><h3 style='color: var(--primary); font-size: 16px;'>📁 公開雲端影音檔案連結</h3><a href='#' style='color: var(--accent); text-decoration: none;'>" + (res.data.videoUrls || "無影音檔案紀錄") + "</a>";
+        
+        document.getElementById('finalSummary').innerHTML = finalContent;
+        document.getElementById('fullDetails').innerHTML = res.data.details;
         
         saveState({ step: 'step-result', meetingData: meetingData });
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -547,37 +629,38 @@
   function copyToClipboard(elementId) {
     const text = document.getElementById(elementId).innerText;
     navigator.clipboard.writeText(text).then(() => {
-      showFeedback("網址已複製成功");
+      showFeedback("網址已成功複製！");
     });
   }
 
   async function saveSummary() {
     const btn = document.getElementById('btnSaveSummary');
     btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader" style="width:16px;"></i> 儲存中...`;
+    btn.innerHTML = `<i data-lucide="loader" style="width:18px;"></i> 儲存中...`;
     lucide.createIcons();
     
-    const newSummary = document.getElementById('finalSummary').value;
+    // 🌟 抓取 innerHTML，把 HTML 排版原封不動存進資料庫
+    const newSummary = document.getElementById('finalSummary').innerHTML;
     try {
       await callGasAPI({ action: "updateSummary", rowIndex: meetingData.rowIndex, newSummary: newSummary });
-      showFeedback("變更已成功同步至資料庫");
-      saveState(); // 同步至 localstorage
+      showFeedback("變更已完美同步至資料庫");
+      saveState(); 
     } catch(err) {
       showFeedback("儲存失敗", true);
     }
     btn.disabled = false;
-    btn.innerHTML = `<i data-lucide="save" style="width:16px;"></i> 儲存至資料庫`;
+    btn.innerHTML = `<i data-lucide="save" style="width:18px;"></i> 儲存至資料庫`;
     lucide.createIcons();
   }
 
   async function exportToDoc() {
     const btn = document.getElementById('btnExportDoc');
     btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader" style="width:16px;"></i> 建立中...`;
+    btn.innerHTML = `<i data-lucide="loader" style="width:18px;"></i> 建立中...`;
     lucide.createIcons();
     
-    const summary = document.getElementById('finalSummary').value;
-    const details = document.getElementById('fullDetails').innerText;
+    const summary = document.getElementById('finalSummary').innerHTML;
+    const details = document.getElementById('fullDetails').innerHTML;
     
     try {
       const res = await callGasAPI({ action: "createDoc", meetingName: meetingData.meetingName, summary: summary, details: details, folderId: meetingData.folderId });
@@ -592,14 +675,14 @@
       showFeedback("建立失敗", true);
     }
     btn.disabled = false;
-    btn.innerHTML = `<i data-lucide="file-text" style="width:16px;"></i> 建立 Google 文件`;
+    btn.innerHTML = `<i data-lucide="file-text" style="width:18px;"></i> 建立 Google 文件`;
     lucide.createIcons();
   }
 
   function showFeedback(msg, isError = false) {
     const el = document.getElementById('actionFeedback');
     el.innerText = msg;
-    el.className = `text-end mt-2 fs-6 fw-bold ${isError ? 'text-danger' : 'text-success'}`;
+    el.style.color = isError ? "rgba(255, 59, 48, 1)" : "var(--accent)";
     setTimeout(() => { el.innerText = ""; }, 3000);
   }
 </script>
