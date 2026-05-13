@@ -7,30 +7,43 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    /* 🍏 Apple-inspired 視覺美學變數 (與原本完全一致) */
+    /* 🍏 Apple-inspired 視覺美學變數 */
     :root { 
       --primary: #1d1d1f; --primary-hover: #434344;
       --accent: #0066cc; --accent-hover: #0077ed;
       --surface: #ffffff; --bg: #f5f5f7; --border: #d2d2d7;
       --text-main: #1d1d1f; --text-muted: #86868b;
-      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
     }
     * { box-sizing: border-box; }
-    body { background-color: var(--bg); font-family: var(--font-family); padding: 40px 20px; color: var(--text-main); overflow-x: hidden; }
+    body { background-color: var(--bg); font-family: var(--font-family); padding: 40px 20px; color: var(--text-main); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
     
     .card-premium { background: var(--surface); border-radius: 24px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.02); width: 100%; max-width: 800px; margin: auto; padding: 48px; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); overflow-x: hidden; }
     .step-section { display: none; opacity: 0; transition: opacity 0.5s ease-in-out; }
     .step-section.active { display: block; opacity: 1; animation: fadeIn 0.5s ease forwards; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
-    /* 🎬 媒體播放器區域 - 劇院級呈現 */
-    .video-container { position: relative; width: 100%; max-height: 480px; background: #000; border-radius: 18px; margin-bottom: 32px; overflow: hidden; box-shadow: 0 12px 24px rgba(0,0,0,0.15); display: none; /* 登入前先隱藏 */ }
+    /* 🍏 iOS 風格設定卡片 (The Steve Jobs Touch) */
+    .ios-card { background: var(--bg); border-radius: 16px; padding: 24px; margin-bottom: 32px; border: 1px solid var(--border); transition: all 0.3s; }
+    .ios-card:hover { border-color: var(--accent); box-shadow: 0 4px 16px rgba(0, 102, 204, 0.08); }
+    .ios-card-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .ios-input-group { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 16px; }
+    .ios-input-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bg); }
+    .ios-input-row:last-child { border-bottom: none; }
+    .ios-input-row label { width: 100px; font-size: 14px; font-weight: 600; color: var(--text-main); margin: 0; flex-shrink: 0; }
+    .ios-input-row input { border: none; outline: none; width: 100%; font-size: 14px; color: var(--text-muted); background: transparent; }
+    .ios-input-row input:focus { color: var(--text-main); }
+    .alert-box { background: rgba(255, 59, 48, 0.08); border-left: 4px solid #d70015; color: #d70015; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
+    .alert-box b { user-select: all; cursor: copy; }
+
+    /* 🎬 媒體播放器區域 */
+    .video-container { position: relative; width: 100%; max-height: 480px; background: #000; border-radius: 18px; margin-bottom: 32px; overflow: hidden; box-shadow: 0 12px 24px rgba(0,0,0,0.15); display: none; }
     video { width: 100%; height: 100%; object-fit: cover; }
     .status-badge { position: absolute; top: 20px; right: 20px; background: rgba(255, 59, 48, 0.95); backdrop-filter: blur(4px); color: white; padding: 6px 14px; border-radius: 99px; font-weight: 600; font-size: 12px; display: none; z-index: 10; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3); }
     .pulse-dot { width: 8px; height: 8px; background-color: white; border-radius: 50%; animation: pulse 1.5s infinite cubic-bezier(0.4, 0, 0.6, 1); }
     @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.8); opacity: 0.5; } }
     
-    .controls-overlay { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(29, 29, 31, 0.75); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); padding: 12px 28px; border-radius: 999px; display: flex; gap: 24px; align-items: center; opacity: 0; transition: opacity 0.4s ease; z-index: 20; max-width: 90%; }
+    .controls-overlay { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(29, 29, 31, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 12px 28px; border-radius: 999px; display: flex; gap: 24px; align-items: center; opacity: 0; transition: opacity 0.4s ease; z-index: 20; max-width: 90%; }
     .video-container.active-controls .controls-overlay { opacity: 1; }
     .control-btn { background: none; border: none; color: white; cursor: pointer; padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.25s; outline: none; }
     .control-btn:hover { background: rgba(255, 255, 255, 0.15); transform: scale(1.05); }
@@ -46,13 +59,15 @@
     .btn-brand { background-color: var(--primary); color: white; font-weight: 600; font-size: 15px; padding: 14px 28px; border-radius: 12px; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s; width: 100%; }
     .btn-brand:hover:not(:disabled) { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .btn-brand:disabled { background-color: #e5e5ea; color: #aeaeb2; cursor: not-allowed; }
-    .btn-outline { background-color: transparent; color: var(--primary); border: 1.5px solid var(--border); font-weight: 600; font-size: 14px; padding: 10px 20px; border-radius: 10px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+    .btn-outline { background-color: transparent; color: var(--primary); border: 1.5px solid var(--border); font-weight: 600; font-size: 14px; padding: 10px 20px; border-radius: 10px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; cursor:pointer; }
     .btn-outline:hover:not(:disabled) { background-color: var(--bg); border-color: var(--text-main); }
     
+    /* 📜 日誌與結果排版 */
     .log-box { height: 140px; overflow-y: auto; background: var(--primary); color: #4ade80; padding: 16px; border-radius: 12px; font-family: ui-monospace, monospace; font-size: 13px; word-break: break-word; }
     .result-editor { width: 100%; min-height: 350px; padding: 24px; border: 1.5px solid var(--border); border-radius: 16px; background: #fff; font-size: 15px; line-height: 1.9; color: var(--text-main); overflow-y: auto; overflow-x: hidden; word-wrap: break-word; }
     .url-box { display: flex; align-items: center; gap: 12px; background: var(--bg); padding: 14px 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px; width: 100%; overflow: hidden; }
     .url-text { flex-grow: 1; font-family: monospace; font-size: 14px; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; min-width: 0; }
+    
     details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; width: 100%; }
     details summary { cursor: pointer; padding: 18px 20px; background-color: var(--bg); font-weight: 600; color: var(--text-main); list-style: none; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
     details summary:hover { background-color: #e5e5ea; }
@@ -63,11 +78,18 @@
     .history-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0, 102, 204, 0.08); transform: translateY(-2px); }
     .history-card-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: var(--text-muted); }
     .history-card-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin: 0; }
-    
-    .alert-box { background: rgba(255, 59, 48, 0.1); border: 1px solid rgba(255, 59, 48, 0.3); color: #d70015; padding: 16px; border-radius: 12px; font-size: 14px; margin-bottom: 20px; }
+
+    /* 登入防呆遮罩 */
+    #loadingOverlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--surface); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   </style>
 </head>
 <body>
+
+<div id="loadingOverlay">
+  <i data-lucide="layers" style="width: 48px; height: 48px; color: var(--primary); margin-bottom:16px;"></i>
+  <h4 style="color:var(--primary); font-weight:700;">GROWTHX</h4>
+  <p style="color:var(--text-muted); font-size:14px; letter-spacing:1px;">載入您的專屬工作區...</p>
+</div>
 
 <div class="card-premium">
   <div class="d-flex align-items-center justify-content-center gap-3 mb-5 flex-wrap">
@@ -88,7 +110,7 @@
     </div>
   </div>
 
-  <div id="step-login" class="step-section active">
+  <div id="step-login" class="step-section">
     <h5 class="fw-bold mb-4 text-center">會員登入 / 註冊</h5>
     <div class="mb-3">
       <label class="form-label">工作信箱 Email</label>
@@ -110,37 +132,51 @@
     <button class="btn-outline w-100 mt-3 justify-content-center" onclick="switchStep('step-login')">回上一步</button>
   </div>
 
-  <div id="step-settings" class="step-section">
-    <h5 class="fw-bold mb-3">系統綁定設定</h5>
-    <div class="alert-box">
-      <strong>⚠️ 權限提醒：</strong><br>請務必將您下方的「Google試算表」與「雲端資料夾」分享給 <b>alwayslucky2hand@gmail.com</b> 並設為「編輯者」權限，否則系統無法寫入。
-    </div>
-    <div class="mb-3"><label class="form-label">Gemini API Key</label><input type="text" id="setApiKey" class="form-control form-control-lg"></div>
-    <div class="mb-3"><label class="form-label">Google 試算表 (會議紀錄) 網址或 ID</label><input type="text" id="setSheet" class="form-control form-control-lg"></div>
-    <div class="mb-4"><label class="form-label">Google 雲端資料夾網址或 ID</label><input type="text" id="setFolder" class="form-control form-control-lg"></div>
-    <button class="btn-brand" id="btnSaveSettings" onclick="saveSettings()">儲存並進入系統</button>
-  </div>
-
   <div id="step-setup" class="step-section">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-      <h5 class="fw-bold m-0" style="color: var(--text-main); font-size: 18px;">設定會議資訊</h5>
+    
+    <div class="ios-card">
+      <div class="ios-card-title"><i data-lucide="settings" style="width:16px;"></i> 系統偏好設定</div>
+      <div class="alert-box" id="settingsAlert" style="display:none;">
+        尚未完成設定！請貼上您的金鑰與網址，並務必將其權限分享給 <b>alwayslucky2hand@gmail.com</b>。
+      </div>
+      <div class="ios-input-group">
+        <div class="ios-input-row">
+          <label>API Key</label>
+          <input type="password" id="setApiKey" placeholder="AIzaSy...">
+        </div>
+        <div class="ios-input-row">
+          <label>試算表網址</label>
+          <input type="text" id="setSheet" placeholder="貼上完整網址，系統自動擷取 ID">
+        </div>
+        <div class="ios-input-row">
+          <label>資料夾網址</label>
+          <input type="text" id="setFolder" placeholder="貼上完整網址，系統自動擷取 ID">
+        </div>
+      </div>
+      <div class="d-flex justify-content-end">
+        <button class="btn-outline py-1 px-3" style="font-size:13px; border-radius:8px;" id="btnSaveSettings" onclick="saveSettings()">儲存更新</button>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 mt-4">
+      <h5 class="fw-bold m-0" style="color: var(--text-main); font-size: 18px;">開啟新會議</h5>
       <div class="d-flex gap-2">
         <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="loadHistoryView()"><i data-lucide="clock" style="width:14px;"></i> 歷史紀錄</button>
         <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="logout()"><i data-lucide="log-out" style="width:14px;"></i> 登出</button>
       </div>
     </div>
     <div class="mb-4">
-      <label class="form-label">目前登入身分</label>
-      <input type="email" id="setupEmail" class="form-control form-control-lg" readonly style="background-color:#e9ecef;">
+      <label class="form-label">登入身分</label>
+      <input type="email" id="setupEmail" class="form-control form-control-lg" readonly style="background-color:#e9ecef; color:var(--text-muted); cursor:not-allowed;">
     </div>
-    <div class="mb-4"><label class="form-label">所屬單位</label><input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：產品研發部"></div>
+    <div class="mb-4"><label class="form-label">本次會議單位</label><input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：產品研發部"></div>
     <div class="mb-4"><label class="form-label">與會人員</label><textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="請輸入參與者姓名..."></textarea></div>
     <button class="btn-brand mt-2" id="btnStartSetup" onclick="startMeeting()"><i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製</button>
   </div>
 
   <div id="step-history" class="step-section">
     <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
-      <h5 class="fw-bold m-0" style="color: var(--text-main); font-size: 18px;">調閱歷史紀錄</h5>
+      <h5 class="fw-bold m-0" style="color: var(--text-main); font-size: 18px;">歷史紀錄調閱</h5>
       <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="switchStep('step-setup')"><i data-lucide="arrow-left" style="width:14px;"></i> 返回</button>
     </div>
     <div id="historyList" style="max-height: 400px; overflow-y: auto; padding-right: 4px;"></div>
@@ -148,19 +184,19 @@
 
   <div id="step-recording" class="step-section">
     <label class="form-label fs-6 mt-2">系統執行日誌</label>
-    <div id="systemLog" class="log-box mb-2">系統啟動中...<br></div>
+    <div id="systemLog" class="log-box mb-2">啟動引擎中...<br></div>
   </div>
   
   <div id="step-result" class="step-section mt-2">
     <div class="mb-4 mt-4">
       <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
-        <label class="form-label m-0 fs-5" style="color: var(--primary);">專業會議總結</label>
-        <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="resetToSetup()"><i data-lucide="rotate-ccw" style="width:14px;"></i> 新會議</button>
+        <label class="form-label m-0 fs-5" style="color: var(--primary);">會議總結報告</label>
+        <button class="btn-outline py-1 px-3" style="font-size: 13px; border-radius: 8px;" onclick="resetToSetup()"><i data-lucide="rotate-ccw" style="width:14px;"></i> 準備下一場</button>
       </div>
       <div id="finalSummary" class="result-editor" contenteditable="true"></div>
       
       <div class="d-flex gap-3 mt-4 justify-content-end flex-wrap">
-        <button class="btn-outline" onclick="saveSummary()" id="btnSaveSummary"><i data-lucide="save" style="width:18px;"></i> 儲存至資料庫</button>
+        <button class="btn-outline" onclick="saveSummary()" id="btnSaveSummary"><i data-lucide="save" style="width:18px;"></i> 覆寫至試算表</button>
         <button class="btn-brand" onclick="exportToDoc()" id="btnExportDoc"><i data-lucide="file-text" style="width:18px;"></i> 建立 Google 文件</button>
       </div>
       <div id="actionFeedback" class="text-end mt-2 fs-6 fw-medium" style="height: 20px; color: var(--accent);"></div>
@@ -175,7 +211,7 @@
     </div>
     
     <details class="mt-4">
-      <summary><i data-lucide="chevron-down" style="width:20px; color: var(--accent);"></i> 檢視完整畫面描述與逐字稿</summary>
+      <summary><i data-lucide="chevron-down" style="width:20px; color: var(--accent);"></i> 檢視原始語音與畫面分析</summary>
       <div id="fullDetails" class="details-content"></div>
     </details>
   </div>
@@ -183,11 +219,11 @@
 
 <script>
   // ==========================================
-  // ⚠️ 請填入最新部署的 GAS URL
+  // ⚠️ The Core: 請貼上你最新部署的 GAS 網址
   // ==========================================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz3u8OWcBy5aPLff38_7kL0K7Jjjk8lOHx2b-WQEEdy1U7g01R9JHWlhMYLGoHM9_Iw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbx_Gv8L-2H2l2zO0aW8j9Wc2zO0aW8j9Wc2zO0aW8j9Wc/exec";
 
-  // --- 全域變數 (完美還原) ---
+  // 全域狀態記憶體
   let currentUserEmail = "";
   let currentStream = null;
   let mediaRecorder = null;
@@ -198,22 +234,18 @@
   let globalHistoryData = []; 
   window.rawMeetingDetails = ""; 
   
-  let isRecording = false;
-  let isPaused = false; 
-  let isVideoEnabled = false; 
-  let wakeLock = null;
-  let activeProcessingTasks = new Set();
+  let isRecording = false; let isPaused = false; let isVideoEnabled = false; 
+  let wakeLock = null; let activeProcessingTasks = new Set();
 
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  let mobileFacingMode = "user"; 
-  let desktopSource = "camera";  
+  let mobileFacingMode = "user"; let desktopSource = "camera";  
 
   const mediaPlayer = document.getElementById('mediaPlayer');
   const videoContainer = document.getElementById('videoContainer');
   const logBox = document.getElementById('systemLog');
   const recBadge = document.getElementById('recBadge');
 
-  // 控制列浮動喚醒
+  // 控制列浮動機制
   let hideControlsTimeout;
   function wakeControls() {
     videoContainer.classList.add('active-controls');
@@ -224,19 +256,28 @@
   videoContainer.addEventListener('click', wakeControls);
   videoContainer.addEventListener('touchstart', wakeControls);
 
-  window.onload = () => {
+  window.onload = async () => {
     document.getElementById('icon-source').setAttribute('data-lucide', 'switch-camera');
     lucide.createIcons();
     wakeControls();
     
     const savedEmail = localStorage.getItem('growthx_email');
     if (savedEmail) {
-      currentUserEmail = savedEmail;
-      document.getElementById('setupEmail').value = currentUserEmail;
-      switchStep('step-setup');
-      videoContainer.style.display = 'block'; // 登入後顯示播放器
-      acquireStream();
+      // 🌟 背景靜默獲取會員設定，達到無縫登入體驗
+      try {
+        const res = await callGasAPI({ action: "getUserInfo", email: savedEmail });
+        if(res.status === 'success') {
+          handleLoginSuccess(res.data);
+        } else { throw new Error(); }
+      } catch(e) {
+        localStorage.removeItem('growthx_email');
+        switchStep('step-login');
+      }
+    } else {
+      switchStep('step-login');
     }
+    // 隱藏過場動畫
+    setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 800);
   };
 
   function switchStep(stepId) {
@@ -244,10 +285,25 @@
     document.getElementById(stepId).classList.add('active');
   }
 
-  function logout() {
-    localStorage.removeItem('growthx_email');
-    location.reload();
+  function handleLoginSuccess(userData) {
+    currentUserEmail = userData.email;
+    localStorage.setItem('growthx_email', userData.email);
+    document.getElementById('setupEmail').value = userData.email;
+    
+    // 將後台資料注入前端偏好設定介面
+    document.getElementById('setApiKey').value = userData.apiKey || '';
+    document.getElementById('setSheet').value = userData.sheetId || '';
+    document.getElementById('setFolder').value = userData.folderId || '';
+    
+    if(!userData.hasSettings) { document.getElementById('settingsAlert').style.display = 'block'; } 
+    else { document.getElementById('settingsAlert').style.display = 'none'; }
+    
+    switchStep('step-setup');
+    videoContainer.style.display = 'block';
+    acquireStream();
   }
+
+  function logout() { localStorage.removeItem('growthx_email'); location.reload(); }
 
   function resetToSetup() {
     switchStep('step-setup');
@@ -256,6 +312,8 @@
     document.getElementById('btnPause').style.display = 'none';
     document.getElementById('btnResume').style.display = 'none';
     document.getElementById('btnStop').style.display = 'none';
+    document.getElementById('setupCompany').value = '';
+    document.getElementById('setupAttendees').value = '';
   }
 
   function log(msg) {
@@ -268,16 +326,15 @@
     try {
       const response = await fetch(GAS_URL, { method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
       return await response.json();
-    } catch (err) { throw new Error("網路請求失敗：" + err.message); }
+    } catch (err) { throw new Error("與伺服器連線中斷"); }
   }
 
-  // --- 登入與綁定 ---
+  // --- 🔐 登入與設定 ---
   async function sendCode() {
     const email = document.getElementById('loginEmail').value;
     const name = document.getElementById('loginName').value;
     if (!email) return alert("請輸入信箱");
-    const btn = document.getElementById('btnSendCode');
-    btn.disabled = true; btn.innerText = "發送中...";
+    const btn = document.getElementById('btnSendCode'); btn.disabled = true; btn.innerText = "發送中...";
     try { await callGasAPI({ action: "sendVerifyCode", email: email, name: name }); switchStep('step-verify'); } 
     catch(e) { alert(e.message); }
     btn.disabled = false; btn.innerText = "取得驗證碼";
@@ -287,20 +344,11 @@
     const email = document.getElementById('loginEmail').value;
     const code = document.getElementById('verifyCode').value;
     if (!code) return alert("請輸入驗證碼");
-    const btn = document.getElementById('btnVerify');
-    btn.disabled = true; btn.innerText = "驗證中...";
+    const btn = document.getElementById('btnVerify'); btn.disabled = true; btn.innerText = "驗證中...";
     try {
       const res = await callGasAPI({ action: "verifyLogin", email: email, code: code });
-      if (res.status === 'success') {
-        currentUserEmail = email;
-        localStorage.setItem('growthx_email', email);
-        document.getElementById('setupEmail').value = email;
-        if (res.data.hasSettings) {
-          switchStep('step-setup');
-          videoContainer.style.display = 'block';
-          acquireStream();
-        } else switchStep('step-settings');
-      } else throw new Error(res.message);
+      if (res.status === 'success') { handleLoginSuccess(res.data); } 
+      else throw new Error(res.message);
     } catch(e) { alert(e.message); }
     btn.disabled = false; btn.innerText = "登入系統";
   }
@@ -317,22 +365,24 @@
     const apiKey = document.getElementById('setApiKey').value;
     const sheetId = extractId(document.getElementById('setSheet').value, 'sheet');
     const folderId = extractId(document.getElementById('setFolder').value, 'folder');
-    if(!apiKey || !sheetId || !folderId) return alert("請填寫完整設定");
-    const btn = document.getElementById('btnSaveSettings');
-    btn.disabled = true; btn.innerText = "儲存中...";
+    
+    // 更新介面顯示純 ID，讓畫面乾淨
+    document.getElementById('setSheet').value = sheetId;
+    document.getElementById('setFolder').value = folderId;
+
+    if(!apiKey || !sheetId || !folderId) return alert("請填寫完整資訊以完成綁定");
+    const btn = document.getElementById('btnSaveSettings'); btn.disabled = true; btn.innerText = "更新中...";
     try {
       const res = await callGasAPI({ action: "updateSettings", email: currentUserEmail, apiKey: apiKey, sheetId: sheetId, folderId: folderId });
       if(res.status === 'success') {
-        alert("設定成功！");
-        switchStep('step-setup');
-        videoContainer.style.display = 'block';
-        acquireStream();
+        document.getElementById('settingsAlert').style.display = 'none';
+        alert("設定更新完成！");
       } else throw new Error(res.message);
     } catch(e) { alert(e.message); }
-    btn.disabled = false; btn.innerText = "儲存並進入系統";
+    btn.disabled = false; btn.innerText = "儲存更新";
   }
 
-  // --- 🎥 鏡頭與畫面控制 (完美還原) ---
+  // --- 🎥 鏡頭與畫面機制 ---
   async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} }
   function releaseWakeLock() { if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; }); }
 
@@ -340,28 +390,23 @@
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
     const constraints = { audio: true };
     try {
-      if (isMobile) {
-        constraints.video = { facingMode: mobileFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } };
-        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-      } else {
-        if (desktopSource === "camera") {
-          constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 } };
-          currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-        } else {
+      if (isMobile) { constraints.video = { facingMode: mobileFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } }; } 
+      else {
+        if (desktopSource === "camera") { constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 } }; } 
+        else {
           currentStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
           currentStream.getVideoTracks()[0].onended = () => {
             if (isRecording) {
               log("[系統] 畫面分享中斷，切回視訊鏡頭");
-              desktopSource = "camera";
-              document.getElementById('icon-source').setAttribute('data-lucide', 'monitor');
-              lucide.createIcons();
+              desktopSource = "camera"; document.getElementById('icon-source').setAttribute('data-lucide', 'monitor'); lucide.createIcons();
               acquireStream().then(() => { if (isRecording && !isPaused) startChunkRecording(); });
             }
           };
+          mediaPlayer.srcObject = currentStream; mediaPlayer.muted = true; return;
         }
       }
-      mediaPlayer.srcObject = currentStream;
-      mediaPlayer.muted = true; 
+      currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+      mediaPlayer.srcObject = currentStream; mediaPlayer.muted = true; 
       const videoTrack = currentStream.getVideoTracks()[0];
       if (videoTrack) videoTrack.enabled = isVideoEnabled; 
     } catch (err) { console.log(err); }
@@ -369,41 +414,33 @@
 
   async function switchSourceAction() {
     const wasRecording = isRecording;
-    if (wasRecording && mediaRecorder && mediaRecorder.state === "recording") {
-      log("[系統] 切換畫面中...");
-      mediaRecorder.stop(); 
-      clearTimeout(chunkInterval);
-    }
+    if (wasRecording && mediaRecorder && mediaRecorder.state === "recording") { log("[系統] 鏡頭切換中..."); mediaRecorder.stop(); clearTimeout(chunkInterval); }
     if (isMobile) mobileFacingMode = (mobileFacingMode === "user") ? "environment" : "user";
     else desktopSource = (desktopSource === "camera") ? "screen" : "camera";
-    try {
-      await acquireStream();
-      if (wasRecording && !isPaused) { log("[成功] 畫面切換完成，繼續錄製"); startChunkRecording(); }
-    } catch (e) { log("[錯誤] 切換失敗"); }
+    try { await acquireStream(); if (wasRecording && !isPaused) { log("[成功] 畫面切換完成，繼續錄製"); startChunkRecording(); } } catch (e) { log("[錯誤] 切換失敗"); }
   }
 
   function toggleVideo() {
     if (currentStream) {
       const videoTrack = currentStream.getVideoTracks()[0];
       if (videoTrack) {
-        isVideoEnabled = !isVideoEnabled;
-        videoTrack.enabled = isVideoEnabled;
+        isVideoEnabled = !isVideoEnabled; videoTrack.enabled = isVideoEnabled;
         const iconEl = document.getElementById('icon-video');
-        if (isVideoEnabled) { iconEl.setAttribute('data-lucide', 'video'); log("[資訊] 已開啟畫面預覽"); } 
-        else { iconEl.setAttribute('data-lucide', 'video-off'); log("[資訊] 畫面已關閉，純語音模式"); }
+        if (isVideoEnabled) { iconEl.setAttribute('data-lucide', 'video'); log("[資訊] 畫面預覽已開啟"); } 
+        else { iconEl.setAttribute('data-lucide', 'video-off'); log("[資訊] 畫面已關閉，節能純語音模式"); }
         lucide.createIcons();
       }
     }
   }
 
-  // --- 🎬 錄製核心機制 (完美還原) ---
+  // --- 🎬 核心錄影與分析 ---
   async function startMeeting() {
     const company = document.getElementById('setupCompany').value;
     const attendees = document.getElementById('setupAttendees').value;
     if (!company) return alert("請填寫會議單位");
 
     document.getElementById('btnStartSetup').disabled = true;
-    document.getElementById('btnStartSetup').innerHTML = `<i data-lucide="loader" class="pulse-dot" style="background:none;"></i> 連線中...`;
+    document.getElementById('btnStartSetup').innerHTML = `<i data-lucide="loader" class="pulse-dot" style="background:none;"></i> 初始化引擎中...`;
     lucide.createIcons();
 
     try {
@@ -421,40 +458,33 @@
           isRecording = true; isPaused = false; chunkIndex = 1;
           recBadge.style.display = 'flex';
           await requestWakeLock(); 
-          log("[系統] 錄製正式開始！啟動雙軌同步並行傳輸。");
+          log("[系統] 引擎啟動！開始雙軌同步寫入您的雲端硬碟。");
           startChunkRecording();
         }
       } else throw new Error(res.message);
     } catch (err) {
       alert("啟動失敗：" + err.message);
       const btn = document.getElementById('btnStartSetup');
-      btn.disabled = false; btn.innerHTML = `<i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製`;
-      lucide.createIcons();
+      btn.disabled = false; btn.innerHTML = `<i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製`; lucide.createIcons();
     }
   }
 
   function pauseMeeting() {
     if (mediaRecorder && mediaRecorder.state === "recording") {
       isPaused = true; 
-      log("[控制] 錄製暫停。進行最後一段切片傳輸後，停止背景傳輸。");
-      mediaRecorder.stop(); 
-      clearTimeout(chunkInterval);
-      document.getElementById('btnPause').style.display = 'none';
-      document.getElementById('btnResume').style.display = 'flex';
-      recBadge.style.background = "rgba(255, 149, 0, 0.95)";
-      document.getElementById('recText').innerText = "PAUSED";
+      log("[控制] 暫停。背景寫入剩餘區段...");
+      mediaRecorder.stop(); clearTimeout(chunkInterval);
+      document.getElementById('btnPause').style.display = 'none'; document.getElementById('btnResume').style.display = 'flex';
+      recBadge.style.background = "rgba(255, 149, 0, 0.95)"; document.getElementById('recText').innerText = "PAUSED";
     }
   }
 
   function resumeMeeting() {
-    log("[控制] 錄製恢復，重新啟動雙軌傳輸...");
+    log("[控制] 恢復錄製...");
     if (currentStream) {
-      isPaused = false; 
-      startChunkRecording(); 
-      document.getElementById('btnResume').style.display = 'none';
-      document.getElementById('btnPause').style.display = 'flex';
-      recBadge.style.background = "rgba(255, 59, 48, 0.95)";
-      document.getElementById('recText').innerText = "REC";
+      isPaused = false; startChunkRecording(); 
+      document.getElementById('btnResume').style.display = 'none'; document.getElementById('btnPause').style.display = 'flex';
+      recBadge.style.background = "rgba(255, 59, 48, 0.95)"; document.getElementById('recText').innerText = "REC";
     }
   }
 
@@ -472,54 +502,43 @@
       }
       if (isRecording && !isPaused) startChunkRecording(); 
     };
-
-    try {
-      mediaRecorder.start();
-      chunkInterval = setTimeout(() => { if (mediaRecorder.state === "recording") mediaRecorder.stop(); }, 60000); 
-    } catch (err) {}
+    try { mediaRecorder.start(); chunkInterval = setTimeout(() => { if (mediaRecorder.state === "recording") mediaRecorder.stop(); }, 60000); } catch (err) {}
   }
 
   function processAndUploadChunk(blob, mimeType, currentIndex) {
-    log(`[傳輸] 區段 ${currentIndex} 雙軌並行處理中...`);
+    log(`[傳輸] 區段 ${currentIndex} 背景寫入中...`);
     const taskPromise = new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
+      const reader = new FileReader(); reader.readAsDataURL(blob);
       reader.onloadend = async () => {
         const base64Data = reader.result.split(',')[1];
         const p1 = callGasAPI({ action: "saveDrive", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, folderId: meetingData.folderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         const p2 = callGasAPI({ action: "recognizeAI", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         await Promise.all([p1, p2]);
-        log(`[成功] 區段 ${currentIndex} 寫入完成`);
-        resolve();
+        log(`[成功] 區段 ${currentIndex} 歸檔完畢`); resolve();
       };
     });
-    activeProcessingTasks.add(taskPromise);
-    taskPromise.then(() => activeProcessingTasks.delete(taskPromise));
+    activeProcessingTasks.add(taskPromise); taskPromise.then(() => activeProcessingTasks.delete(taskPromise));
   }
 
   async function stopMeeting() {
-    isRecording = false; isPaused = false;
-    clearTimeout(chunkInterval);
-    recBadge.style.display = 'none';
-    releaseWakeLock(); 
+    isRecording = false; isPaused = false; clearTimeout(chunkInterval);
+    recBadge.style.display = 'none'; releaseWakeLock(); 
     document.getElementById('playerControls').style.display = 'none';
-    log("[系統] 正在提取最終區段資料...");
+    log("[系統] 收集最後資料...");
 
     const onStopPromise = new Promise(resolve => {
       if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
-        const originalOnStop = mediaRecorder.onstop;
-        mediaRecorder.onstop = (e) => { if(originalOnStop) originalOnStop(e); resolve(); };
-        mediaRecorder.stop(); 
+        const originalOnStop = mediaRecorder.onstop; mediaRecorder.onstop = (e) => { if(originalOnStop) originalOnStop(e); resolve(); }; mediaRecorder.stop(); 
       } else resolve();
     });
 
     await onStopPromise;
     if (activeProcessingTasks.size > 0) {
-      log(`[鎖定] 嚴格等待 ${activeProcessingTasks.size} 筆背景任務完成寫入...`);
+      log(`[鎖定] 等待 ${activeProcessingTasks.size} 筆背景工作完成...`);
       while(activeProcessingTasks.size > 0) { await Promise.all(Array.from(activeProcessingTasks)); }
     }
 
-    log("[系統] 呼叫 AI 進行會議總結...");
+    log("[系統] 呼叫 AI 產生最終智慧總結...");
     try {
       const res = await callGasAPI({ action: "finalizeMeeting", email: currentUserEmail, rowIndex: meetingData.rowIndex });
       if (res.status === 'success') {
@@ -530,44 +549,26 @@
     } catch(err) { log("[錯誤] 異常: " + err.message); }
   }
 
-  // --- 📝 排版引擎與資料儲存 (完美還原) ---
+  // --- 📝 排版與歷史 ---
   function renderBeautifulText(rawSummary, rawDetails, videoUrls) {
     window.rawMeetingDetails = rawDetails || "";
-    let formattedSummary = (rawSummary || "")
-      .replace(/###\s*(.*?)(?=\n|$)/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>")
-      .replace(/【(.*?)】/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>")
-      .replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--accent);'>$1</strong>")
-      .replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px;'><span style='position: absolute; left: 0; color: var(--accent);'>•</span>$1</div>")
-      .replace(/\*(.*?)\*/g, "<strong style='color: var(--primary);'>$1</strong>").replace(/\n/g, "<br>");
-
-    let formattedDetails = (rawDetails || "")
-      .replace(/--- 第 (.*?) 分鐘紀錄 ---/g, "<strong style='color: var(--primary); display:block; margin-top:16px; margin-bottom:4px; border-bottom: 1px solid var(--border); padding-bottom: 4px;'>--- 第 $1 分鐘紀錄 ---</strong>")
-      .replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--text-main); font-weight: 600;'>$1</strong>")
-      .replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px; font-size: 13.5px;'><span style='position: absolute; left: 0; color: var(--text-muted);'>•</span>$1</div>")
-      .replace(/\n/g, "<br>");
-
-    const finalContent = formattedSummary + "<br><h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>📁 公開雲端影音檔案連結</h3><a href='" + (videoUrls.split(',')[0] || '#') + "' target='_blank' style='color: var(--accent); text-decoration: none; word-break: break-all;'>點此查看影音檔案</a>";
-    document.getElementById('finalSummary').innerHTML = finalContent;
-    document.getElementById('fullDetails').innerHTML = formattedDetails;
+    let formattedSummary = (rawSummary || "").replace(/###\s*(.*?)(?=\n|$)/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>").replace(/【(.*?)】/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>").replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--accent);'>$1</strong>").replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px;'><span style='position: absolute; left: 0; color: var(--accent);'>•</span>$1</div>").replace(/\*(.*?)\*/g, "<strong style='color: var(--primary);'>$1</strong>").replace(/\n/g, "<br>");
+    let formattedDetails = (rawDetails || "").replace(/--- 第 (.*?) 分鐘紀錄 ---/g, "<strong style='color: var(--primary); display:block; margin-top:16px; margin-bottom:4px; border-bottom: 1px solid var(--border); padding-bottom: 4px;'>--- 第 $1 分鐘紀錄 ---</strong>").replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--text-main); font-weight: 600;'>$1</strong>").replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px; font-size: 13.5px;'><span style='position: absolute; left: 0; color: var(--text-muted);'>•</span>$1</div>").replace(/\n/g, "<br>");
+    const finalContent = formattedSummary + "<br><h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>📁 雲端影音檔案</h3><a href='" + (videoUrls.split(',')[0] || '#') + "' target='_blank' style='color: var(--accent); text-decoration: none;'>點此查看原始影音</a>";
+    document.getElementById('finalSummary').innerHTML = finalContent; document.getElementById('fullDetails').innerHTML = formattedDetails;
   }
 
   function showFeedback(msg, isError = false) {
-    const el = document.getElementById('actionFeedback');
-    el.innerText = msg; el.style.color = isError ? "rgba(255, 59, 48, 1)" : "var(--accent)";
-    setTimeout(() => { el.innerText = ""; }, 3000);
+    const el = document.getElementById('actionFeedback'); el.innerText = msg; el.style.color = isError ? "rgba(255, 59, 48, 1)" : "var(--accent)"; setTimeout(() => { el.innerText = ""; }, 3000);
   }
 
-  function copyToClipboard(elementId) {
-    navigator.clipboard.writeText(document.getElementById(elementId).innerText).then(() => showFeedback("網址已成功複製！"));
-  }
+  function copyToClipboard(elementId) { navigator.clipboard.writeText(document.getElementById(elementId).innerText).then(() => showFeedback("連結已複製")); }
 
   async function saveSummary() {
     const btn = document.getElementById('btnSaveSummary'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader" style="width:18px;"></i> 儲存中...`; lucide.createIcons();
-    try {
-      await callGasAPI({ action: "updateSummary", email: currentUserEmail, rowIndex: meetingData.rowIndex, newSummary: document.getElementById('finalSummary').innerText });
-      showFeedback("變更已完美同步至資料庫");
-    } catch(err) { showFeedback("儲存失敗", true); }
-    btn.disabled = false; btn.innerHTML = `<i data-lucide="save" style="width:18px;"></i> 儲存至資料庫`; lucide.createIcons();
+    try { await callGasAPI({ action: "updateSummary", email: currentUserEmail, rowIndex: meetingData.rowIndex, newSummary: document.getElementById('finalSummary').innerText }); showFeedback("已完美覆寫至您的試算表"); } 
+    catch(err) { showFeedback("儲存失敗", true); }
+    btn.disabled = false; btn.innerHTML = `<i data-lucide="save" style="width:18px;"></i> 覆寫至試算表`; lucide.createIcons();
   }
 
   async function exportToDoc() {
@@ -575,48 +576,31 @@
     let detailsText = window.rawMeetingDetails.replace(/\*\*(.*?)\*\*/g, "$1").replace(/###\s*(.*?)(?=\n|$)/g, "$1").replace(/^\*\s+(.*)/gm, "• $1");
     try {
       const res = await callGasAPI({ action: "createDoc", email: currentUserEmail, meetingName: meetingData.meetingName, summary: document.getElementById('finalSummary').innerText, details: detailsText, folderId: meetingData.folderId });
-      if(res.status === 'success') {
-        showFeedback("文件建立完成！");
-        document.getElementById('docLinkArea').style.display = 'flex';
-        document.getElementById('docUrlText').innerText = res.data;
-        window.open(res.data, '_blank'); 
-      }
+      if(res.status === 'success') { showFeedback("文件建立完成！"); document.getElementById('docLinkArea').style.display = 'flex'; document.getElementById('docUrlText').innerText = res.data; window.open(res.data, '_blank'); }
     } catch(err) { showFeedback("建立失敗", true); }
     btn.disabled = false; btn.innerHTML = `<i data-lucide="file-text" style="width:18px;"></i> 建立 Google 文件`; lucide.createIcons();
   }
 
-  // --- 📜 歷史調閱 (完美還原) ---
-  function loadHistoryView() {
-    document.getElementById('historyList').innerHTML = '<div class="text-center text-muted p-4">讀取中...</div>';
-    switchStep('step-history'); fetchHistoryData();
-  }
-
-  async function fetchHistoryData() {
+  async function loadHistoryView() {
+    document.getElementById('historyList').innerHTML = '<div class="text-center text-muted p-4">拉取資料中...</div>'; switchStep('step-history'); 
     try {
       const res = await callGasAPI({ action: "fetchHistory", email: currentUserEmail });
       if (res.status === 'success' && res.data.length > 0) {
-        globalHistoryData = res.data;
-        let html = '';
+        globalHistoryData = res.data; let html = '';
         globalHistoryData.forEach((item, index) => {
           html += `<div class="history-card" onclick="loadHistoryItem(${index})">
-            <div class="history-card-header">
-              <span><i data-lucide="calendar" style="width:14px; margin-right:4px;"></i>${item.date} ${item.time}</span>
-              <span style="color: var(--accent); font-weight: 500;">載入紀錄</span>
-            </div>
+            <div class="history-card-header"><span><i data-lucide="calendar" style="width:14px; margin-right:4px;"></i>${item.date} ${item.time}</span><span style="color: var(--accent); font-weight: 500;">開啟</span></div>
             <h4 class="history-card-title">${item.company} 專案會議</h4>
           </div>`;
         });
         document.getElementById('historyList').innerHTML = html; lucide.createIcons();
-      } else document.getElementById('historyList').innerHTML = `<div class="text-center text-muted p-4">尚無您的會議紀錄</div>`;
+      } else document.getElementById('historyList').innerHTML = `<div class="text-center text-muted p-4">尚無紀錄</div>`;
     } catch (err) { alert("查詢失敗：" + err.message); }
   }
 
   function loadHistoryItem(index) {
-    const item = globalHistoryData[index];
-    meetingData = { rowIndex: item.rowIndex, folderId: "", meetingName: "歷史調閱_" + item.company };
-    renderBeautifulText(item.summary, item.details, item.urls);
-    document.getElementById('playerControls').style.display = 'none';
-    switchStep('step-result');
+    const item = globalHistoryData[index]; meetingData = { rowIndex: item.rowIndex, folderId: "", meetingName: "歷史調閱_" + item.company };
+    renderBeautifulText(item.summary, item.details, item.urls); document.getElementById('playerControls').style.display = 'none'; switchStep('step-result');
   }
 </script>
 </body>
