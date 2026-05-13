@@ -152,11 +152,11 @@
         </div>
         <div class="ios-input-row">
           <label>試算表網址</label>
-          <input type="text" id="setSheet" placeholder="貼上完整網址，系統自動擷取 ID">
+          <input type="text" id="setSheet" placeholder="請貼上完整網址，系統會自動儲存">
         </div>
         <div class="ios-input-row">
           <label>資料夾網址</label>
-          <input type="text" id="setFolder" placeholder="貼上完整網址，系統自動擷取 ID">
+          <input type="text" id="setFolder" placeholder="請貼上完整網址，系統會自動儲存">
         </div>
       </div>
       <div class="d-flex justify-content-end">
@@ -224,7 +224,7 @@
 
 <script>
   // ==========================================
-  // ⚠️ The Core: 請貼上你最新部署的 GAS 網址
+  // ⚠️ The Core: 請保留您的 GAS 網址
   // ==========================================
   const GAS_URL = "https://script.google.com/macros/s/AKfycbz3u8OWcBy5aPLff38_7kL0K7Jjjk8lOHx2b-WQEEdy1U7g01R9JHWlhMYLGoHM9_Iw/exec";
 
@@ -242,7 +242,7 @@
     setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => toast.remove(), 400);
-    }, 4000); // 4秒後優雅淡出
+    }, 4000); 
   }
 
   // --- 全域狀態 ---
@@ -259,7 +259,6 @@
   const logBox = document.getElementById('systemLog');
   const recBadge = document.getElementById('recBadge');
 
-  // 控制列浮動機制
   let hideControlsTimeout;
   function wakeControls() {
     videoContainer.classList.add('active-controls');
@@ -302,8 +301,9 @@
     document.getElementById('setupEmail').value = userData.email;
     
     document.getElementById('setApiKey').value = userData.apiKey || '';
-    document.getElementById('setSheet').value = userData.sheetId || '';
-    document.getElementById('setFolder').value = userData.folderId || '';
+    // ✅ 現在直接顯示資料庫中的原始完整網址
+    document.getElementById('setSheet').value = userData.rawSheetUrl || '';
+    document.getElementById('setFolder').value = userData.rawFolderUrl || '';
     
     if(!userData.hasSettings) { document.getElementById('settingsAlert').style.display = 'block'; } 
     else { document.getElementById('settingsAlert').style.display = 'none'; }
@@ -371,27 +371,17 @@
     btn.disabled = false; btn.innerText = "登入系統";
   }
 
-  function extractId(input, type) {
-    if (!input.includes('http')) return input;
-    try {
-      if (type === 'sheet') { const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/); return match ? match[1] : input; }
-      if (type === 'folder') { const match = input.match(/folders\/([a-zA-Z0-9-_]+)/) || input.match(/id=([a-zA-Z0-9-_]+)/); return match ? match[1] : input; }
-    } catch(e) {} return input;
-  }
-
   async function saveSettings() {
     const apiKey = document.getElementById('setApiKey').value;
-    const sheetId = extractId(document.getElementById('setSheet').value, 'sheet');
-    const folderId = extractId(document.getElementById('setFolder').value, 'folder');
+    // ✅ 直接讀取使用者貼上的完整網址，不再前端動刀
+    const sheetUrl = document.getElementById('setSheet').value;
+    const folderUrl = document.getElementById('setFolder').value;
     
-    document.getElementById('setSheet').value = sheetId;
-    document.getElementById('setFolder').value = folderId;
-
-    if(!apiKey || !sheetId || !folderId) { showToast("請填寫完整資訊以完成綁定", "error"); return; }
+    if(!apiKey || !sheetUrl || !folderUrl) { showToast("請填寫完整資訊以完成綁定", "error"); return; }
     
     const btn = document.getElementById('btnSaveSettings'); btn.disabled = true; btn.innerText = "更新中...";
     try {
-      const res = await callGasAPI({ action: "updateSettings", email: currentUserEmail, apiKey: apiKey, sheetId: sheetId, folderId: folderId });
+      const res = await callGasAPI({ action: "updateSettings", email: currentUserEmail, apiKey: apiKey, sheetId: sheetUrl, folderId: folderUrl });
       if(res.status === 'success') {
         document.getElementById('settingsAlert').style.display = 'none';
         showToast(res.data, "success");
@@ -580,8 +570,24 @@
     window.rawMeetingDetails = rawDetails || "";
     let formattedSummary = (rawSummary || "").replace(/###\s*(.*?)(?=\n|$)/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>").replace(/【(.*?)】/g, "<h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>$1</h3>").replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--accent);'>$1</strong>").replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px;'><span style='position: absolute; left: 0; color: var(--accent);'>•</span>$1</div>").replace(/\*(.*?)\*/g, "<strong style='color: var(--primary);'>$1</strong>").replace(/\n/g, "<br>");
     let formattedDetails = (rawDetails || "").replace(/--- 第 (.*?) 分鐘紀錄 ---/g, "<strong style='color: var(--primary); display:block; margin-top:16px; margin-bottom:4px; border-bottom: 1px solid var(--border); padding-bottom: 4px;'>--- 第 $1 分鐘紀錄 ---</strong>").replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--text-main); font-weight: 600;'>$1</strong>").replace(/^\*\s+(.*)/gm, "<div style='padding-left: 16px; position: relative; margin-bottom: 6px; font-size: 13.5px;'><span style='position: absolute; left: 0; color: var(--text-muted);'>•</span>$1</div>").replace(/\n/g, "<br>");
-    const finalContent = formattedSummary + "<br><h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>📁 雲端影音檔案</h3><a href='" + (videoUrls.split(',')[0] || '#') + "' target='_blank' style='color: var(--accent); text-decoration: none;'>點此查看原始影音</a>";
+    
+    // ✅ 動態生成影音「切片」按鈕的區域
+    let videoButtonsHTML = "<div style='display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;'>";
+    if (videoUrls) {
+      // 根據儲存的逗號+換行來切割網址
+      const urlList = videoUrls.split(',').map(u => u.trim()).filter(u => u.length > 0);
+      urlList.forEach((url, idx) => {
+        videoButtonsHTML += `<a href="${url}" target="_blank" class="btn-outline" style="text-decoration: none; padding: 6px 12px; font-size: 13px; border-radius: 8px; display: inline-flex;"><i data-lucide="video" style="width:16px; margin-right:4px;"></i> 切片 ${idx + 1}</a>`;
+      });
+    }
+    videoButtonsHTML += "</div>";
+
+    const finalContent = formattedSummary + "<br><h3 style='color: var(--primary); font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 12px;'>📁 雲端影音檔案</h3>" + videoButtonsHTML;
+    
     document.getElementById('finalSummary').innerHTML = finalContent; document.getElementById('fullDetails').innerHTML = formattedDetails;
+    
+    // 重新載入 Lucide Icon 確保按鈕圖標正常顯示
+    setTimeout(() => { lucide.createIcons(); }, 100);
   }
 
   function copyToClipboard(elementId) { 
