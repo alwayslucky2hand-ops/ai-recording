@@ -182,7 +182,7 @@
     </div>
     <div class="mb-4"><label class="form-label">本次會議單位</label><input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：產品研發部"></div>
     <div class="mb-4"><label class="form-label">與會人員</label><textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="請輸入參與者姓名..."></textarea></div>
-    <button class="btn-brand mt-2" id="btnStartSetup" onclick="startMeeting()"><i data-lucide="play-circle" style="width:20px;"></i> 啟啟動錄製</button>
+    <button class="btn-brand mt-2" id="btnStartSetup" onclick="startMeeting()"><i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製</button>
   </div>
 
   <div id="step-history" class="step-section">
@@ -252,7 +252,6 @@
 
   // --- 全域狀態 ---
   let currentUserEmail = ""; let currentStream = null; let mediaRecorder = null;
-  // 🌟 修正重點：統一將資料夾變數名改回 folderId
   let chunkInterval; let chunkIndex = 1; let meetingData = { folderId: '', rowIndex: 0, meetingName: '' };
   let globalHistoryData = []; window.rawMeetingDetails = ""; 
   let isRecording = false; let isPaused = false; let isVideoEnabled = false; 
@@ -390,7 +389,6 @@
       const res = await callGasAPI({ action: "updateSettings", email: currentUserEmail, apiKey: apiKey, sheetUrl: sheetUrl, videoFolderUrl: videoFolderUrl, docFolderUrl: docFolderUrl });
       if(res.status === 'success') {
         document.getElementById('settingsAlert').style.display = 'none';
-        // 如果後端回傳包含 "權限未開放"，用警告樣式顯示，提醒他們去收信
         if(res.data.includes("權限未開放")) {
           showToast(res.data, "warning");
         } else {
@@ -401,19 +399,54 @@
     btn.disabled = false; btn.innerText = "儲存更新與驗證權限";
   }
 
-  // --- 🎥 鏡頭與畫面機制 ---
+  // --- 🎥 鏡頭與畫面機制 (極致優化版) ---
   async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} }
   function releaseWakeLock() { if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; }); }
 
   async function acquireStream() {
     if (currentStream) currentStream.getTracks().forEach(track => track.stop());
-    const constraints = { audio: true };
+    
+    // 🎤 強制最佳化麥克風收音 (降噪、回音消除、自動增益)
+    const audioConstraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+    
     try {
-      if (isMobile) { constraints.video = { facingMode: mobileFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } }; } 
+      if (isMobile) { 
+        // 手機端：降低解析度以節省流量 (240p)
+        currentStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: mobileFacingMode, width: { ideal: 426, max: 640 }, height: { ideal: 240, max: 360 }, frameRate: { ideal: 10, max: 15 } },
+          audio: audioConstraints
+        }); 
+      } 
       else {
-        if (desktopSource === "camera") { constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 } }; } 
+        if (desktopSource === "camera") { 
+          // 筆電鏡頭：240p 輕量傳輸，幀率降低至 10fps
+          currentStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: { ideal: 426, max: 640 }, height: { ideal: 240, max: 360 }, frameRate: { ideal: 10, max: 15 } },
+            audio: audioConstraints
+          }); 
+        } 
         else {
-          currentStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+          // 💻 螢幕分享 + 操作者人聲混音核心邏輯
+          const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+            video: { width: { ideal: 640, max: 854 }, height: { ideal: 360, max: 480 }, frameRate: { ideal: 5, max: 10 } } // 螢幕若用 240p 字會全糊，建議最低 360p + 5 fps 極低幀率來壓檔案大小
+          });
+          
+          // 獨立抓取麥克風聲音 (確保錄下你的聲音)
+          let micStream = null;
+          try { 
+            micStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints }); 
+          } catch(e) { log("[警告] 麥克風抓取失敗，無法錄製人聲"); }
+
+          // 混音器：把螢幕畫面與麥克風聲音強制綁在一起
+          if (micStream && micStream.getAudioTracks().length > 0) {
+            currentStream = new MediaStream([ 
+              screenStream.getVideoTracks()[0], 
+              micStream.getAudioTracks()[0] 
+            ]);
+          } else {
+            currentStream = screenStream; // 若沒麥克風，退回只錄螢幕
+          }
+
           currentStream.getVideoTracks()[0].onended = () => {
             if (isRecording) {
               log("[系統] 畫面分享中斷，切回視訊鏡頭");
@@ -424,7 +457,6 @@
           mediaPlayer.srcObject = currentStream; mediaPlayer.muted = true; return;
         }
       }
-      currentStream = await navigator.mediaDevices.getUserMedia(constraints);
       mediaPlayer.srcObject = currentStream; mediaPlayer.muted = true; 
       const videoTrack = currentStream.getVideoTracks()[0];
       if (videoTrack) videoTrack.enabled = isVideoEnabled; 
@@ -533,7 +565,6 @@
       const reader = new FileReader(); reader.readAsDataURL(blob);
       reader.onloadend = async () => {
         const base64Data = reader.result.split(',')[1];
-        // 🌟 修正重點：使用正確的 folderId 變數名稱
         const p1 = callGasAPI({ action: "saveDrive", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, folderId: meetingData.folderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         const p2 = callGasAPI({ action: "recognizeAI", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         await Promise.all([p1, p2]);
@@ -648,7 +679,6 @@
   }
 
   function loadHistoryItem(index) {
-    // 🌟 修正重點：使用正確的 folderId 變數名稱
     const item = globalHistoryData[index]; meetingData = { rowIndex: item.rowIndex, folderId: "", meetingName: "歷史調閱_" + item.company };
     renderBeautifulText(item.summary, item.details, item.urls); document.getElementById('playerControls').style.display = 'none'; switchStep('step-result');
   }
