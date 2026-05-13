@@ -29,6 +29,7 @@
     .custom-toast.show { opacity: 1; transform: translateY(0) scale(1); }
     .toast-error { background: rgba(255, 59, 48, 0.9); border-color: rgba(255,59,48,0.3); color: white; }
     .toast-success { background: rgba(52, 199, 89, 0.95); border-color: rgba(52,199,89,0.3); color: white; }
+    .toast-warning { background: rgba(255, 149, 0, 0.95); border-color: rgba(255, 149, 0, 0.3); color: white; }
 
     /* 🍏 iOS 風格設定卡片 */
     .ios-card { background: var(--bg); border-radius: 16px; padding: 24px; margin-bottom: 32px; border: 1px solid var(--border); transition: all 0.3s; }
@@ -36,7 +37,7 @@
     .ios-input-group { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 16px; }
     .ios-input-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bg); }
     .ios-input-row:last-child { border-bottom: none; }
-    .ios-input-row label { width: 100px; font-size: 14px; font-weight: 600; color: var(--text-main); margin: 0; flex-shrink: 0; }
+    .ios-input-row label { width: 110px; font-size: 13.5px; font-weight: 600; color: var(--text-main); margin: 0; flex-shrink: 0; }
     .ios-input-row input { border: none; outline: none; width: 100%; font-size: 14px; color: var(--text-muted); background: transparent; }
     .ios-input-row input:focus { color: var(--text-main); }
     .alert-box { background: rgba(255, 59, 48, 0.08); border-left: 4px solid #d70015; color: #d70015; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
@@ -152,15 +153,19 @@
         </div>
         <div class="ios-input-row">
           <label>試算表網址</label>
-          <input type="text" id="setSheet" placeholder="請貼上完整網址，系統會自動儲存">
+          <input type="text" id="setSheet" placeholder="請貼上會議紀錄試算表網址">
         </div>
         <div class="ios-input-row">
-          <label>資料夾網址</label>
-          <input type="text" id="setFolder" placeholder="請貼上完整網址，系統會自動儲存">
+          <label>影音資料夾</label>
+          <input type="text" id="setVideoFolder" placeholder="請貼上影音原檔存放資料夾網址">
+        </div>
+        <div class="ios-input-row">
+          <label>Doc文件資料夾</label>
+          <input type="text" id="setDocFolder" placeholder="請貼上 Google Doc 總結存放資料夾網址">
         </div>
       </div>
       <div class="d-flex justify-content-end">
-        <button class="btn-outline py-1 px-3" style="font-size:13px; border-radius:8px;" id="btnSaveSettings" onclick="saveSettings()">儲存更新</button>
+        <button class="btn-outline py-1 px-3" style="font-size:13px; border-radius:8px;" id="btnSaveSettings" onclick="saveSettings()">儲存更新與驗證權限</button>
       </div>
     </div>
 
@@ -224,7 +229,7 @@
 
 <script>
   // ==========================================
-  // ⚠️ The Core: 請保留您的 GAS 網址
+  // ⚠️ The Core: 請貼上你最新部署的 GAS 網址
   // ==========================================
   const GAS_URL = "https://script.google.com/macros/s/AKfycbz3u8OWcBy5aPLff38_7kL0K7Jjjk8lOHx2b-WQEEdy1U7g01R9JHWlhMYLGoHM9_Iw/exec";
 
@@ -233,7 +238,7 @@
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `custom-toast toast-${type}`;
-    const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+    const icon = type === 'success' ? 'check-circle' : (type === 'warning' ? 'alert-triangle' : 'alert-circle');
     toast.innerHTML = `<i data-lucide="${icon}" style="width:18px; flex-shrink:0;"></i><span>${message}</span>`;
     container.appendChild(toast);
     lucide.createIcons();
@@ -242,12 +247,12 @@
     setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => toast.remove(), 400);
-    }, 4000); 
+    }, type === 'warning' ? 6000 : 4000); // 警告訊息停留久一點
   }
 
   // --- 全域狀態 ---
   let currentUserEmail = ""; let currentStream = null; let mediaRecorder = null;
-  let chunkInterval; let chunkIndex = 1; let meetingData = { folderId: '', rowIndex: 0, meetingName: '' };
+  let chunkInterval; let chunkIndex = 1; let meetingData = { videoFolderId: '', rowIndex: 0, meetingName: '' };
   let globalHistoryData = []; window.rawMeetingDetails = ""; 
   let isRecording = false; let isPaused = false; let isVideoEnabled = false; 
   let wakeLock = null; let activeProcessingTasks = new Set();
@@ -301,9 +306,9 @@
     document.getElementById('setupEmail').value = userData.email;
     
     document.getElementById('setApiKey').value = userData.apiKey || '';
-    // ✅ 現在直接顯示資料庫中的原始完整網址
     document.getElementById('setSheet').value = userData.rawSheetUrl || '';
-    document.getElementById('setFolder').value = userData.rawFolderUrl || '';
+    document.getElementById('setVideoFolder').value = userData.rawVideoFolderUrl || '';
+    document.getElementById('setDocFolder').value = userData.rawDocFolderUrl || '';
     
     if(!userData.hasSettings) { document.getElementById('settingsAlert').style.display = 'block'; } 
     else { document.getElementById('settingsAlert').style.display = 'none'; }
@@ -373,21 +378,26 @@
 
   async function saveSettings() {
     const apiKey = document.getElementById('setApiKey').value;
-    // ✅ 直接讀取使用者貼上的完整網址，不再前端動刀
     const sheetUrl = document.getElementById('setSheet').value;
-    const folderUrl = document.getElementById('setFolder').value;
+    const videoFolderUrl = document.getElementById('setVideoFolder').value;
+    const docFolderUrl = document.getElementById('setDocFolder').value;
     
-    if(!apiKey || !sheetUrl || !folderUrl) { showToast("請填寫完整資訊以完成綁定", "error"); return; }
+    if(!apiKey || !sheetUrl || !videoFolderUrl || !docFolderUrl) { showToast("請填寫完整資訊以完成綁定", "error"); return; }
     
-    const btn = document.getElementById('btnSaveSettings'); btn.disabled = true; btn.innerText = "更新中...";
+    const btn = document.getElementById('btnSaveSettings'); btn.disabled = true; btn.innerText = "更新與驗證中...";
     try {
-      const res = await callGasAPI({ action: "updateSettings", email: currentUserEmail, apiKey: apiKey, sheetId: sheetUrl, folderId: folderUrl });
+      const res = await callGasAPI({ action: "updateSettings", email: currentUserEmail, apiKey: apiKey, sheetUrl: sheetUrl, videoFolderUrl: videoFolderUrl, docFolderUrl: docFolderUrl });
       if(res.status === 'success') {
         document.getElementById('settingsAlert').style.display = 'none';
-        showToast(res.data, "success");
+        // 如果後端回傳包含 "權限未開放"，用警告樣式顯示，提醒他們去收信
+        if(res.data.includes("權限未開放")) {
+          showToast(res.data, "warning");
+        } else {
+          showToast(res.data, "success");
+        }
       } else throw new Error(res.message);
     } catch(e) { showToast(e.message, "error"); }
-    btn.disabled = false; btn.innerText = "儲存更新";
+    btn.disabled = false; btn.innerText = "儲存更新與驗證權限";
   }
 
   // --- 🎥 鏡頭與畫面機制 ---
@@ -522,7 +532,7 @@
       const reader = new FileReader(); reader.readAsDataURL(blob);
       reader.onloadend = async () => {
         const base64Data = reader.result.split(',')[1];
-        const p1 = callGasAPI({ action: "saveDrive", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, folderId: meetingData.folderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
+        const p1 = callGasAPI({ action: "saveDrive", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, folderId: meetingData.videoFolderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         const p2 = callGasAPI({ action: "recognizeAI", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         await Promise.all([p1, p2]);
         log(`[成功] 區段 ${currentIndex} 歸檔完畢`); resolve();
@@ -574,7 +584,6 @@
     // ✅ 動態生成影音「切片」按鈕的區域
     let videoButtonsHTML = "<div style='display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;'>";
     if (videoUrls) {
-      // 根據儲存的逗號+換行來切割網址
       const urlList = videoUrls.split(',').map(u => u.trim()).filter(u => u.length > 0);
       urlList.forEach((url, idx) => {
         videoButtonsHTML += `<a href="${url}" target="_blank" class="btn-outline" style="text-decoration: none; padding: 6px 12px; font-size: 13px; border-radius: 8px; display: inline-flex;"><i data-lucide="video" style="width:16px; margin-right:4px;"></i> 切片 ${idx + 1}</a>`;
@@ -586,7 +595,6 @@
     
     document.getElementById('finalSummary').innerHTML = finalContent; document.getElementById('fullDetails').innerHTML = formattedDetails;
     
-    // 重新載入 Lucide Icon 確保按鈕圖標正常顯示
     setTimeout(() => { lucide.createIcons(); }, 100);
   }
 
@@ -608,7 +616,8 @@
     const btn = document.getElementById('btnExportDoc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader" style="width:18px;"></i> 建立中...`; lucide.createIcons();
     let detailsText = window.rawMeetingDetails.replace(/\*\*(.*?)\*\*/g, "$1").replace(/###\s*(.*?)(?=\n|$)/g, "$1").replace(/^\*\s+(.*)/gm, "• $1");
     try {
-      const res = await callGasAPI({ action: "createDoc", email: currentUserEmail, meetingName: meetingData.meetingName, summary: document.getElementById('finalSummary').innerText, details: detailsText, folderId: meetingData.folderId });
+      // ✅ 現在建立文件不需要從前端帶 folderId 了，後端會自己從資料庫抓
+      const res = await callGasAPI({ action: "createDoc", email: currentUserEmail, meetingName: meetingData.meetingName, summary: document.getElementById('finalSummary').innerText, details: detailsText });
       if(res.status === 'success') { 
         showToast("文件建立完成！", "success"); 
         document.getElementById('docLinkArea').style.display = 'flex'; document.getElementById('docUrlText').innerText = res.data; 
@@ -638,7 +647,7 @@
   }
 
   function loadHistoryItem(index) {
-    const item = globalHistoryData[index]; meetingData = { rowIndex: item.rowIndex, folderId: "", meetingName: "歷史調閱_" + item.company };
+    const item = globalHistoryData[index]; meetingData = { rowIndex: item.rowIndex, videoFolderId: "", meetingName: "歷史調閱_" + item.company };
     renderBeautifulText(item.summary, item.details, item.urls); document.getElementById('playerControls').style.display = 'none'; switchStep('step-result');
   }
 </script>
