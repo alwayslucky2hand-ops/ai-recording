@@ -182,7 +182,7 @@
     </div>
     <div class="mb-4"><label class="form-label">本次會議單位</label><input type="text" id="setupCompany" class="form-control form-control-lg" placeholder="例如：產品研發部"></div>
     <div class="mb-4"><label class="form-label">與會人員</label><textarea id="setupAttendees" class="form-control form-control-lg" rows="2" placeholder="請輸入參與者姓名..."></textarea></div>
-    <button class="btn-brand mt-2" id="btnStartSetup" onclick="startMeeting()"><i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製</button>
+    <button class="btn-brand mt-2" id="btnStartSetup" onclick="startMeeting()"><i data-lucide="play-circle" style="width:20px;"></i> 啟啟動錄製</button>
   </div>
 
   <div id="step-history" class="step-section">
@@ -252,7 +252,8 @@
 
   // --- 全域狀態 ---
   let currentUserEmail = ""; let currentStream = null; let mediaRecorder = null;
-  let chunkInterval; let chunkIndex = 1; let meetingData = { videoFolderId: '', rowIndex: 0, meetingName: '' };
+  // 🌟 修正重點：統一將資料夾變數名改回 folderId
+  let chunkInterval; let chunkIndex = 1; let meetingData = { folderId: '', rowIndex: 0, meetingName: '' };
   let globalHistoryData = []; window.rawMeetingDetails = ""; 
   let isRecording = false; let isPaused = false; let isVideoEnabled = false; 
   let wakeLock = null; let activeProcessingTasks = new Set();
@@ -532,7 +533,8 @@
       const reader = new FileReader(); reader.readAsDataURL(blob);
       reader.onloadend = async () => {
         const base64Data = reader.result.split(',')[1];
-        const p1 = callGasAPI({ action: "saveDrive", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, folderId: meetingData.videoFolderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
+        // 🌟 修正重點：使用正確的 folderId 變數名稱
+        const p1 = callGasAPI({ action: "saveDrive", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, folderId: meetingData.folderId, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         const p2 = callGasAPI({ action: "recognizeAI", email: currentUserEmail, base64Data: base64Data, mimeType: mimeType, rowIndex: meetingData.rowIndex, chunkIndex: currentIndex });
         await Promise.all([p1, p2]);
         log(`[成功] 區段 ${currentIndex} 歸檔完畢`); resolve();
@@ -616,7 +618,6 @@
     const btn = document.getElementById('btnExportDoc'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader" style="width:18px;"></i> 建立中...`; lucide.createIcons();
     let detailsText = window.rawMeetingDetails.replace(/\*\*(.*?)\*\*/g, "$1").replace(/###\s*(.*?)(?=\n|$)/g, "$1").replace(/^\*\s+(.*)/gm, "• $1");
     try {
-      // ✅ 現在建立文件不需要從前端帶 folderId 了，後端會自己從資料庫抓
       const res = await callGasAPI({ action: "createDoc", email: currentUserEmail, meetingName: meetingData.meetingName, summary: document.getElementById('finalSummary').innerText, details: detailsText });
       if(res.status === 'success') { 
         showToast("文件建立完成！", "success"); 
@@ -647,7 +648,8 @@
   }
 
   function loadHistoryItem(index) {
-    const item = globalHistoryData[index]; meetingData = { rowIndex: item.rowIndex, videoFolderId: "", meetingName: "歷史調閱_" + item.company };
+    // 🌟 修正重點：使用正確的 folderId 變數名稱
+    const item = globalHistoryData[index]; meetingData = { rowIndex: item.rowIndex, folderId: "", meetingName: "歷史調閱_" + item.company };
     renderBeautifulText(item.summary, item.details, item.urls); document.getElementById('playerControls').style.display = 'none'; switchStep('step-result');
   }
 </script>
