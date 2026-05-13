@@ -23,9 +23,15 @@
     .step-section.active { display: block; opacity: 1; animation: fadeIn 0.5s ease forwards; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
-    /* 🍏 iOS 風格設定卡片 (The Steve Jobs Touch) */
+    /* 🌟 The Steve Jobs Touch: 極致動態通知系統 (Toast) */
+    .toast-container { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+    .custom-toast { background: rgba(255,255,255,0.85); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); color: var(--text-main); padding: 14px 24px; border-radius: 999px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); border: 1px solid rgba(255,255,255,0.5); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(-20px) scale(0.95); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); pointer-events: auto; }
+    .custom-toast.show { opacity: 1; transform: translateY(0) scale(1); }
+    .toast-error { background: rgba(255, 59, 48, 0.9); border-color: rgba(255,59,48,0.3); color: white; }
+    .toast-success { background: rgba(52, 199, 89, 0.95); border-color: rgba(52,199,89,0.3); color: white; }
+
+    /* 🍏 iOS 風格設定卡片 */
     .ios-card { background: var(--bg); border-radius: 16px; padding: 24px; margin-bottom: 32px; border: 1px solid var(--border); transition: all 0.3s; }
-    .ios-card:hover { border-color: var(--accent); box-shadow: 0 4px 16px rgba(0, 102, 204, 0.08); }
     .ios-card-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .ios-input-group { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 16px; }
     .ios-input-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bg); }
@@ -34,7 +40,6 @@
     .ios-input-row input { border: none; outline: none; width: 100%; font-size: 14px; color: var(--text-muted); background: transparent; }
     .ios-input-row input:focus { color: var(--text-main); }
     .alert-box { background: rgba(255, 59, 48, 0.08); border-left: 4px solid #d70015; color: #d70015; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
-    .alert-box b { user-select: all; cursor: copy; }
 
     /* 🎬 媒體播放器區域 */
     .video-container { position: relative; width: 100%; max-height: 480px; background: #000; border-radius: 18px; margin-bottom: 32px; overflow: hidden; box-shadow: 0 12px 24px rgba(0,0,0,0.15); display: none; }
@@ -79,16 +84,17 @@
     .history-card-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: var(--text-muted); }
     .history-card-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin: 0; }
 
-    /* 登入防呆遮罩 */
     #loadingOverlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--surface); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   </style>
 </head>
 <body>
 
+<div id="toast-container" class="toast-container"></div>
+
 <div id="loadingOverlay">
   <i data-lucide="layers" style="width: 48px; height: 48px; color: var(--primary); margin-bottom:16px;"></i>
   <h4 style="color:var(--primary); font-weight:700;">GROWTHX</h4>
-  <p style="color:var(--text-muted); font-size:14px; letter-spacing:1px;">載入您的專屬工作區...</p>
+  <p style="color:var(--text-muted); font-size:14px; letter-spacing:1px;">正在準備您的極致體驗...</p>
 </div>
 
 <div class="card-premium">
@@ -199,7 +205,6 @@
         <button class="btn-outline" onclick="saveSummary()" id="btnSaveSummary"><i data-lucide="save" style="width:18px;"></i> 覆寫至試算表</button>
         <button class="btn-brand" onclick="exportToDoc()" id="btnExportDoc"><i data-lucide="file-text" style="width:18px;"></i> 建立 Google 文件</button>
       </div>
-      <div id="actionFeedback" class="text-end mt-2 fs-6 fw-medium" style="height: 20px; color: var(--accent);"></div>
     </div>
     
     <div id="docLinkArea" style="display:none;" class="mb-4">
@@ -223,20 +228,29 @@
   // ==========================================
   const GAS_URL = "https://script.google.com/macros/s/AKfycbx_Gv8L-2H2l2zO0aW8j9Wc2zO0aW8j9Wc2zO0aW8j9Wc/exec";
 
-  // 全域狀態記憶體
-  let currentUserEmail = "";
-  let currentStream = null;
-  let mediaRecorder = null;
-  let chunkInterval;
-  let chunkIndex = 1;
-  let meetingData = { folderId: '', rowIndex: 0, meetingName: '' };
-  
-  let globalHistoryData = []; 
-  window.rawMeetingDetails = ""; 
-  
+  // --- 🌟 動態懸浮提示系統 (The Magic Toast) ---
+  function showToast(message, type = 'error') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `custom-toast toast-${type}`;
+    const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+    toast.innerHTML = `<i data-lucide="${icon}" style="width:18px; flex-shrink:0;"></i><span>${message}</span>`;
+    container.appendChild(toast);
+    lucide.createIcons();
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }, 4000); // 4秒後優雅淡出
+  }
+
+  // --- 全域狀態 ---
+  let currentUserEmail = ""; let currentStream = null; let mediaRecorder = null;
+  let chunkInterval; let chunkIndex = 1; let meetingData = { folderId: '', rowIndex: 0, meetingName: '' };
+  let globalHistoryData = []; window.rawMeetingDetails = ""; 
   let isRecording = false; let isPaused = false; let isVideoEnabled = false; 
   let wakeLock = null; let activeProcessingTasks = new Set();
-
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   let mobileFacingMode = "user"; let desktopSource = "camera";  
 
@@ -263,12 +277,10 @@
     
     const savedEmail = localStorage.getItem('growthx_email');
     if (savedEmail) {
-      // 🌟 背景靜默獲取會員設定，達到無縫登入體驗
       try {
         const res = await callGasAPI({ action: "getUserInfo", email: savedEmail });
-        if(res.status === 'success') {
-          handleLoginSuccess(res.data);
-        } else { throw new Error(); }
+        if(res.status === 'success') { handleLoginSuccess(res.data); } 
+        else { throw new Error(); }
       } catch(e) {
         localStorage.removeItem('growthx_email');
         switchStep('step-login');
@@ -276,7 +288,6 @@
     } else {
       switchStep('step-login');
     }
-    // 隱藏過場動畫
     setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 800);
   };
 
@@ -290,7 +301,6 @@
     localStorage.setItem('growthx_email', userData.email);
     document.getElementById('setupEmail').value = userData.email;
     
-    // 將後台資料注入前端偏好設定介面
     document.getElementById('setApiKey').value = userData.apiKey || '';
     document.getElementById('setSheet').value = userData.sheetId || '';
     document.getElementById('setFolder').value = userData.folderId || '';
@@ -318,38 +328,46 @@
 
   function log(msg) {
     const time = new Date().toLocaleTimeString('zh-TW', { hour12: false });
-    logBox.innerHTML += `[${time}] ${msg}<br>`;
-    logBox.scrollTop = logBox.scrollHeight;
+    logBox.innerHTML += `[${time}] ${msg}<br>`; logBox.scrollTop = logBox.scrollHeight;
   }
 
   async function callGasAPI(payload) {
     try {
       const response = await fetch(GAS_URL, { method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
       return await response.json();
-    } catch (err) { throw new Error("與伺服器連線中斷"); }
+    } catch (err) { throw new Error("與伺服器連線中斷，請檢查網路狀態。"); }
   }
 
   // --- 🔐 登入與設定 ---
   async function sendCode() {
     const email = document.getElementById('loginEmail').value;
     const name = document.getElementById('loginName').value;
-    if (!email) return alert("請輸入信箱");
+    if (!email) { showToast("請輸入工作信箱", "error"); return; }
+    
     const btn = document.getElementById('btnSendCode'); btn.disabled = true; btn.innerText = "發送中...";
-    try { await callGasAPI({ action: "sendVerifyCode", email: email, name: name }); switchStep('step-verify'); } 
-    catch(e) { alert(e.message); }
+    try { 
+      const res = await callGasAPI({ action: "sendVerifyCode", email: email, name: name }); 
+      showToast(res.data, "success");
+      switchStep('step-verify'); 
+    } 
+    catch(e) { showToast(e.message, "error"); }
     btn.disabled = false; btn.innerText = "取得驗證碼";
   }
 
   async function verifyLogin() {
     const email = document.getElementById('loginEmail').value;
     const code = document.getElementById('verifyCode').value;
-    if (!code) return alert("請輸入驗證碼");
+    if (!code) { showToast("請輸入 6 位數驗證碼", "error"); return; }
+    
     const btn = document.getElementById('btnVerify'); btn.disabled = true; btn.innerText = "驗證中...";
     try {
       const res = await callGasAPI({ action: "verifyLogin", email: email, code: code });
-      if (res.status === 'success') { handleLoginSuccess(res.data); } 
+      if (res.status === 'success') { 
+        showToast("登入成功，歡迎回來！", "success");
+        handleLoginSuccess(res.data); 
+      } 
       else throw new Error(res.message);
-    } catch(e) { alert(e.message); }
+    } catch(e) { showToast(e.message, "error"); }
     btn.disabled = false; btn.innerText = "登入系統";
   }
 
@@ -366,19 +384,19 @@
     const sheetId = extractId(document.getElementById('setSheet').value, 'sheet');
     const folderId = extractId(document.getElementById('setFolder').value, 'folder');
     
-    // 更新介面顯示純 ID，讓畫面乾淨
     document.getElementById('setSheet').value = sheetId;
     document.getElementById('setFolder').value = folderId;
 
-    if(!apiKey || !sheetId || !folderId) return alert("請填寫完整資訊以完成綁定");
+    if(!apiKey || !sheetId || !folderId) { showToast("請填寫完整資訊以完成綁定", "error"); return; }
+    
     const btn = document.getElementById('btnSaveSettings'); btn.disabled = true; btn.innerText = "更新中...";
     try {
       const res = await callGasAPI({ action: "updateSettings", email: currentUserEmail, apiKey: apiKey, sheetId: sheetId, folderId: folderId });
       if(res.status === 'success') {
         document.getElementById('settingsAlert').style.display = 'none';
-        alert("設定更新完成！");
+        showToast(res.data, "success");
       } else throw new Error(res.message);
-    } catch(e) { alert(e.message); }
+    } catch(e) { showToast(e.message, "error"); }
     btn.disabled = false; btn.innerText = "儲存更新";
   }
 
@@ -409,7 +427,7 @@
       mediaPlayer.srcObject = currentStream; mediaPlayer.muted = true; 
       const videoTrack = currentStream.getVideoTracks()[0];
       if (videoTrack) videoTrack.enabled = isVideoEnabled; 
-    } catch (err) { console.log(err); }
+    } catch (err) { showToast("無法存取相機或麥克風權限", "error"); console.log(err); }
   }
 
   async function switchSourceAction() {
@@ -417,7 +435,8 @@
     if (wasRecording && mediaRecorder && mediaRecorder.state === "recording") { log("[系統] 鏡頭切換中..."); mediaRecorder.stop(); clearTimeout(chunkInterval); }
     if (isMobile) mobileFacingMode = (mobileFacingMode === "user") ? "environment" : "user";
     else desktopSource = (desktopSource === "camera") ? "screen" : "camera";
-    try { await acquireStream(); if (wasRecording && !isPaused) { log("[成功] 畫面切換完成，繼續錄製"); startChunkRecording(); } } catch (e) { log("[錯誤] 切換失敗"); }
+    try { await acquireStream(); if (wasRecording && !isPaused) { log("[成功] 畫面切換完成，繼續錄製"); startChunkRecording(); } } 
+    catch (e) { log("[錯誤] 切換失敗"); showToast("鏡頭切換失敗", "error"); }
   }
 
   function toggleVideo() {
@@ -437,7 +456,7 @@
   async function startMeeting() {
     const company = document.getElementById('setupCompany').value;
     const attendees = document.getElementById('setupAttendees').value;
-    if (!company) return alert("請填寫會議單位");
+    if (!company) { showToast("請填寫本次會議單位", "error"); return; }
 
     document.getElementById('btnStartSetup').disabled = true;
     document.getElementById('btnStartSetup').innerHTML = `<i data-lucide="loader" class="pulse-dot" style="background:none;"></i> 初始化引擎中...`;
@@ -460,10 +479,12 @@
           await requestWakeLock(); 
           log("[系統] 引擎啟動！開始雙軌同步寫入您的雲端硬碟。");
           startChunkRecording();
+        } else {
+          throw new Error("無法偵測到音軌訊號，請確認麥克風是否正常運作。");
         }
       } else throw new Error(res.message);
     } catch (err) {
-      alert("啟動失敗：" + err.message);
+      showToast(err.message, "error");
       const btn = document.getElementById('btnStartSetup');
       btn.disabled = false; btn.innerHTML = `<i data-lucide="play-circle" style="width:20px;"></i> 啟動錄製`; lucide.createIcons();
     }
@@ -535,6 +556,7 @@
     await onStopPromise;
     if (activeProcessingTasks.size > 0) {
       log(`[鎖定] 等待 ${activeProcessingTasks.size} 筆背景工作完成...`);
+      showToast("正在處理最終資料，請稍候...", "success");
       while(activeProcessingTasks.size > 0) { await Promise.all(Array.from(activeProcessingTasks)); }
     }
 
@@ -545,8 +567,12 @@
         switchStep('step-result'); 
         renderBeautifulText(res.data.summary, res.data.details, res.data.videoUrls);
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-      } else log("[錯誤] 總結失敗: " + res.message);
-    } catch(err) { log("[錯誤] 異常: " + err.message); }
+        showToast("會議紀錄已成功生成！", "success");
+      } else {
+        log("[錯誤] 總結失敗: " + res.message);
+        showToast("總結生成失敗，請稍後重試", "error");
+      }
+    } catch(err) { log("[錯誤] 異常: " + err.message); showToast("系統發生異常", "error"); }
   }
 
   // --- 📝 排版與歷史 ---
@@ -558,16 +584,17 @@
     document.getElementById('finalSummary').innerHTML = finalContent; document.getElementById('fullDetails').innerHTML = formattedDetails;
   }
 
-  function showFeedback(msg, isError = false) {
-    const el = document.getElementById('actionFeedback'); el.innerText = msg; el.style.color = isError ? "rgba(255, 59, 48, 1)" : "var(--accent)"; setTimeout(() => { el.innerText = ""; }, 3000);
+  function copyToClipboard(elementId) { 
+    navigator.clipboard.writeText(document.getElementById(elementId).innerText).then(() => showToast("雲端連結已複製", "success")); 
   }
-
-  function copyToClipboard(elementId) { navigator.clipboard.writeText(document.getElementById(elementId).innerText).then(() => showFeedback("連結已複製")); }
 
   async function saveSummary() {
     const btn = document.getElementById('btnSaveSummary'); btn.disabled = true; btn.innerHTML = `<i data-lucide="loader" style="width:18px;"></i> 儲存中...`; lucide.createIcons();
-    try { await callGasAPI({ action: "updateSummary", email: currentUserEmail, rowIndex: meetingData.rowIndex, newSummary: document.getElementById('finalSummary').innerText }); showFeedback("已完美覆寫至您的試算表"); } 
-    catch(err) { showFeedback("儲存失敗", true); }
+    try { 
+      await callGasAPI({ action: "updateSummary", email: currentUserEmail, rowIndex: meetingData.rowIndex, newSummary: document.getElementById('finalSummary').innerText }); 
+      showToast("已完美覆寫至您的試算表", "success"); 
+    } 
+    catch(err) { showToast("覆寫儲存失敗，請檢查權限", "error"); }
     btn.disabled = false; btn.innerHTML = `<i data-lucide="save" style="width:18px;"></i> 覆寫至試算表`; lucide.createIcons();
   }
 
@@ -576,13 +603,17 @@
     let detailsText = window.rawMeetingDetails.replace(/\*\*(.*?)\*\*/g, "$1").replace(/###\s*(.*?)(?=\n|$)/g, "$1").replace(/^\*\s+(.*)/gm, "• $1");
     try {
       const res = await callGasAPI({ action: "createDoc", email: currentUserEmail, meetingName: meetingData.meetingName, summary: document.getElementById('finalSummary').innerText, details: detailsText, folderId: meetingData.folderId });
-      if(res.status === 'success') { showFeedback("文件建立完成！"); document.getElementById('docLinkArea').style.display = 'flex'; document.getElementById('docUrlText').innerText = res.data; window.open(res.data, '_blank'); }
-    } catch(err) { showFeedback("建立失敗", true); }
+      if(res.status === 'success') { 
+        showToast("文件建立完成！", "success"); 
+        document.getElementById('docLinkArea').style.display = 'flex'; document.getElementById('docUrlText').innerText = res.data; 
+        window.open(res.data, '_blank'); 
+      }
+    } catch(err) { showToast("建立失敗，請檢查資料夾權限", "error"); }
     btn.disabled = false; btn.innerHTML = `<i data-lucide="file-text" style="width:18px;"></i> 建立 Google 文件`; lucide.createIcons();
   }
 
   async function loadHistoryView() {
-    document.getElementById('historyList').innerHTML = '<div class="text-center text-muted p-4">拉取資料中...</div>'; switchStep('step-history'); 
+    document.getElementById('historyList').innerHTML = '<div class="text-center text-muted p-4">從雲端拉取資料中...</div>'; switchStep('step-history'); 
     try {
       const res = await callGasAPI({ action: "fetchHistory", email: currentUserEmail });
       if (res.status === 'success' && res.data.length > 0) {
@@ -594,8 +625,10 @@
           </div>`;
         });
         document.getElementById('historyList').innerHTML = html; lucide.createIcons();
-      } else document.getElementById('historyList').innerHTML = `<div class="text-center text-muted p-4">尚無紀錄</div>`;
-    } catch (err) { alert("查詢失敗：" + err.message); }
+      } else {
+        document.getElementById('historyList').innerHTML = `<div class="text-center text-muted p-4">尚無您的會議紀錄</div>`;
+      }
+    } catch (err) { showToast("查詢失敗，請確認試算表狀態", "error"); }
   }
 
   function loadHistoryItem(index) {
