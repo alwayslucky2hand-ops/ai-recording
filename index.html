@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>GROWTHX｜Meet & Diary Recorder</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -16,16 +16,28 @@
       --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
     }
     * { box-sizing: border-box; }
-    body { background-color: var(--bg); font-family: var(--font-family); padding: 40px 20px; color: var(--text-main); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+    
+    /* 優化 1 & 2：鎖定最大寬度並隱藏 X 軸溢出，防止手機左右晃動 */
+    html, body { max-width: 100vw; overflow-x: hidden; position: relative; }
+    
+    body { background-color: var(--bg); font-family: var(--font-family); padding: 40px 20px; color: var(--text-main); -webkit-font-smoothing: antialiased; }
     
     .card-premium { background: var(--surface); border-radius: 24px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.02); width: 100%; max-width: 800px; margin: auto; padding: 48px; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); overflow-x: hidden; }
+    
+    /* 針對手機裝置的內距微調，避免卡片破出螢幕 */
+    @media (max-width: 768px) {
+      body { padding: 20px 10px; }
+      .card-premium { padding: 32px 20px; }
+      .ios-card { padding: 16px !important; }
+    }
+
     .step-section { display: none; opacity: 0; transition: opacity 0.5s ease-in-out; }
     .step-section.active { display: block; opacity: 1; animation: fadeIn 0.5s ease forwards; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
     /* 🌟 The Steve Jobs Touch: 極致動態通知系統 (Toast) */
-    .toast-container { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-    .custom-toast { background: rgba(255,255,255,0.85); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); color: var(--text-main); padding: 14px 24px; border-radius: 999px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); border: 1px solid rgba(255,255,255,0.5); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(-20px) scale(0.95); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); pointer-events: auto; }
+    .toast-container { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; width: 90%; max-width: 400px; align-items: center; }
+    .custom-toast { background: rgba(255,255,255,0.85); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); color: var(--text-main); padding: 14px 24px; border-radius: 999px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); border: 1px solid rgba(255,255,255,0.5); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(-20px) scale(0.95); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); pointer-events: auto; max-width: 100%; word-break: break-word; }
     .custom-toast.show { opacity: 1; transform: translateY(0) scale(1); }
     .toast-error { background: rgba(255, 59, 48, 0.9); border-color: rgba(255,59,48,0.3); color: white; }
     .toast-success { background: rgba(52, 199, 89, 0.95); border-color: rgba(52,199,89,0.3); color: white; }
@@ -35,12 +47,13 @@
     .ios-card { background: var(--bg); border-radius: 16px; padding: 24px; margin-bottom: 32px; border: 1px solid var(--border); transition: all 0.3s; }
     .ios-card-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .ios-input-group { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 16px; }
-    .ios-input-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bg); }
+    .ios-input-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bg); flex-wrap: wrap; }
     .ios-input-row:last-child { border-bottom: none; }
     .ios-input-row label { width: 110px; font-size: 13.5px; font-weight: 600; color: var(--text-main); margin: 0; flex-shrink: 0; }
-    .ios-input-row input { border: none; outline: none; width: 100%; font-size: 14px; color: var(--text-muted); background: transparent; }
+    /* 優化 2：加上 min-width: 0 確保過長的網址不會把欄位撐破 */
+    .ios-input-row input { border: none; outline: none; flex-grow: 1; font-size: 14px; color: var(--text-muted); background: transparent; min-width: 0; }
     .ios-input-row input:focus { color: var(--text-main); }
-    .alert-box { background: rgba(255, 59, 48, 0.08); border-left: 4px solid #d70015; color: #d70015; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
+    .alert-box { background: rgba(255, 59, 48, 0.08); border-left: 4px solid #d70015; color: #d70015; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 13px; margin-bottom: 16px; line-height: 1.6; word-break: break-word; }
 
     /* 🎬 媒體播放器區域 */
     .video-container { position: relative; width: 100%; max-height: 480px; background: #000; border-radius: 18px; margin-bottom: 32px; overflow: hidden; box-shadow: 0 12px 24px rgba(0,0,0,0.15); display: none; }
@@ -258,6 +271,9 @@
   let wakeLock = null; let activeProcessingTasks = new Set();
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   let mobileFacingMode = "user"; let desktopSource = "camera";  
+  
+  // 優化 3：新增全域變數來判斷是否已經有儲存設定
+  let hasValidSettings = false; 
 
   const mediaPlayer = document.getElementById('mediaPlayer');
   const videoContainer = document.getElementById('videoContainer');
@@ -309,6 +325,9 @@
     document.getElementById('setSheet').value = userData.rawSheetUrl || '';
     document.getElementById('setVideoFolder').value = userData.rawVideoFolderUrl || '';
     document.getElementById('setDocFolder').value = userData.rawDocFolderUrl || '';
+    
+    // 優化 3：將使用者的設定狀態同步到全域變數
+    hasValidSettings = userData.hasSettings;
     
     if(!userData.hasSettings) { document.getElementById('settingsAlert').style.display = 'block'; } 
     else { document.getElementById('settingsAlert').style.display = 'none'; }
@@ -388,6 +407,9 @@
     try {
       const res = await callGasAPI({ action: "updateSettings", email: currentUserEmail, apiKey: apiKey, sheetUrl: sheetUrl, videoFolderUrl: videoFolderUrl, docFolderUrl: docFolderUrl });
       if(res.status === 'success') {
+        // 優化 3：儲存成功後，將設定狀態設為 true
+        hasValidSettings = true;
+        
         document.getElementById('settingsAlert').style.display = 'none';
         if(res.data.includes("權限未開放")) {
           showToast(res.data, "warning");
@@ -487,6 +509,22 @@
 
   // --- 🎬 核心錄影與分析 ---
   async function startMeeting() {
+    // 優化 3：啟動錄製前的嚴格驗證阻擋
+    const apiKey = document.getElementById('setApiKey').value.trim();
+    const sheetUrl = document.getElementById('setSheet').value.trim();
+    const videoFolderUrl = document.getElementById('setVideoFolder').value.trim();
+    const docFolderUrl = document.getElementById('setDocFolder').value.trim();
+    
+    if (!apiKey || !sheetUrl || !videoFolderUrl || !docFolderUrl) {
+      showToast("請先填寫上方所有的系統偏好設定欄位！", "error");
+      return;
+    }
+    
+    if (!hasValidSettings) {
+      showToast("請先點擊「儲存更新與驗證權限」並等待完成，再啟動錄製！", "error");
+      return;
+    }
+
     const company = document.getElementById('setupCompany').value;
     const attendees = document.getElementById('setupAttendees').value;
     if (!company) { showToast("請填寫本次會議單位", "error"); return; }
