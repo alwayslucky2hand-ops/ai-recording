@@ -154,31 +154,61 @@
 
   <div id="step-setup" class="step-section">
     
+    <!-- ✨ 更新後的系統設定引導面板 -->
     <div class="ios-card">
-      <div class="ios-card-title"><i data-lucide="settings" style="width:16px;"></i> 系統偏好設定</div>
-      <div class="alert-box" id="settingsAlert" style="display:none;">
-        尚未完成設定！請貼上您的金鑰與網址，並務必將其權限分享給 <b>alwayslucky2hand@gmail.com</b>。
+      <div class="ios-card-title"><i data-lucide="settings" style="width:16px;"></i> 系統初始綁定與授權指南</div>
+      
+      <div style="background: var(--bg); padding: 18px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border);">
+        <p style="margin-top: 0; margin-bottom: 12px; font-weight: 700; color: var(--text-main); font-size: 15px;">請依照以下 4 個步驟準備您的專屬空間：</p>
+        <ol style="margin-bottom: 16px; padding-left: 20px; color: var(--text-muted); font-size: 14px; line-height: 1.8;">
+          <li>前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 600;">Google AI Studio</a> 申請您的 Gemini API Key。</li>
+          <li>在您的 Google 雲端硬碟建立 <b>「影音存放資料夾」</b>。</li>
+          <li>在您的 Google 雲端硬碟建立 <b>「會議紀錄試算表」</b>。</li>
+          <li>在您的 Google 雲端硬碟建立 <b>「Docs 總結存放資料夾」</b>。</li>
+        </ol>
+        
+        <div style="background: #fff; border: 1.5px dashed rgba(0, 102, 204, 0.3); padding: 14px; border-radius: 10px;">
+          <div style="font-weight: 600; color: var(--primary); font-size: 14px; margin-bottom: 8px;">
+            <i data-lucide="shield-alert" style="width:16px; margin-right:4px; color: var(--accent);"></i> 權限共用設定
+          </div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">
+            請務必將上述 3 個雲端連結的「編輯者」權限，共用給下方系統信箱：
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <input type="text" id="serviceEmail" value="alwayslucky2hand@gmail.com" readonly class="form-control" style="font-size: 14px; background: #f5f5f7; flex-grow: 1; min-width: 200px; padding: 8px 12px;">
+            <button class="btn-outline" style="padding: 8px 16px; font-size: 13px; flex-shrink: 0;" onclick="copyServiceEmail()">
+              <i data-lucide="copy" style="width:16px;"></i> 一鍵複製
+            </button>
+          </div>
+        </div>
       </div>
+
+      <div class="alert-box" id="settingsAlert" style="display:none; background: rgba(255, 149, 0, 0.1); border-left-color: #ff9500; color: #cc7700;">
+        <!-- 錯誤訊息將由系統動態注入這裡 -->
+      </div>
+
       <div class="ios-input-group">
         <div class="ios-input-row">
           <label>API Key</label>
-          <input type="password" id="setApiKey" placeholder="AIzaSy...">
+          <input type="password" id="setApiKey" placeholder="AIzaSy... (貼上您的 Gemini API Key)">
         </div>
         <div class="ios-input-row">
           <label>試算表網址</label>
-          <input type="text" id="setSheet" placeholder="請貼上會議紀錄試算表網址">
+          <input type="text" id="setSheet" placeholder="貼上會議紀錄試算表網址">
         </div>
         <div class="ios-input-row">
           <label>影音資料夾</label>
-          <input type="text" id="setVideoFolder" placeholder="請貼上影音原檔存放資料夾網址">
+          <input type="text" id="setVideoFolder" placeholder="貼上影音原檔資料夾網址">
         </div>
         <div class="ios-input-row">
           <label>Doc文件資料夾</label>
-          <input type="text" id="setDocFolder" placeholder="請貼上 Google Doc 總結存放資料夾網址">
+          <input type="text" id="setDocFolder" placeholder="貼上 Docs 總結資料夾網址">
         </div>
       </div>
       <div class="d-flex justify-content-end">
-        <button class="btn-outline py-1 px-3" style="font-size:13px; border-radius:8px;" id="btnSaveSettings" onclick="saveSettings()">儲存更新與驗證權限</button>
+        <button class="btn-brand py-2 px-4" style="font-size:15px; width: auto;" id="btnSaveSettings" onclick="saveSettings()">
+          <i data-lucide="shield-check" style="width:18px;"></i> 儲存並驗證雲端權限
+        </button>
       </div>
     </div>
 
@@ -326,11 +356,11 @@
     document.getElementById('setVideoFolder').value = userData.rawVideoFolderUrl || '';
     document.getElementById('setDocFolder').value = userData.rawDocFolderUrl || '';
     
-    // 優化 3：將使用者的設定狀態同步到全域變數
+    // 將使用者的設定狀態同步到全域變數
     hasValidSettings = userData.hasSettings;
     
-    if(!userData.hasSettings) { document.getElementById('settingsAlert').style.display = 'block'; } 
-    else { document.getElementById('settingsAlert').style.display = 'none'; }
+    // UI邏輯：因為有了固定的引導面板，當沒有設定時，將隱藏動態警報框，讓他們先看說明
+    if(userData.hasSettings) { document.getElementById('settingsAlert').style.display = 'none'; }
     
     switchStep('step-setup');
     videoContainer.style.display = 'block';
@@ -395,30 +425,66 @@
     btn.disabled = false; btn.innerText = "登入系統";
   }
 
+  // 🌟 一鍵複製系統信箱
+  function copyServiceEmail() {
+    const emailInput = document.getElementById('serviceEmail');
+    emailInput.select();
+    navigator.clipboard.writeText(emailInput.value).then(() => {
+      showToast("系統信箱已複製！請前往 Google 雲端硬碟設定共用", "success");
+    });
+  }
+
+  // 📝 強化版：儲存並驗證權限
   async function saveSettings() {
-    const apiKey = document.getElementById('setApiKey').value;
-    const sheetUrl = document.getElementById('setSheet').value;
-    const videoFolderUrl = document.getElementById('setVideoFolder').value;
-    const docFolderUrl = document.getElementById('setDocFolder').value;
+    const apiKey = document.getElementById('setApiKey').value.trim();
+    const sheetUrl = document.getElementById('setSheet').value.trim();
+    const videoFolderUrl = document.getElementById('setVideoFolder').value.trim();
+    const docFolderUrl = document.getElementById('setDocFolder').value.trim();
     
-    if(!apiKey || !sheetUrl || !videoFolderUrl || !docFolderUrl) { showToast("請填寫完整資訊以完成綁定", "error"); return; }
+    if(!apiKey || !sheetUrl || !videoFolderUrl || !docFolderUrl) { 
+      showToast("請填寫完整的所有網址與金鑰", "error"); 
+      return; 
+    }
     
-    const btn = document.getElementById('btnSaveSettings'); btn.disabled = true; btn.innerText = "更新與驗證中...";
+    const btn = document.getElementById('btnSaveSettings'); 
+    btn.disabled = true; 
+    btn.innerHTML = `<i data-lucide="loader" class="pulse-dot" style="background:none;"></i> 敲門驗證中...`;
+    lucide.createIcons();
+    
     try {
-      const res = await callGasAPI({ action: "updateSettings", email: currentUserEmail, apiKey: apiKey, sheetUrl: sheetUrl, videoFolderUrl: videoFolderUrl, docFolderUrl: docFolderUrl });
+      const res = await callGasAPI({ 
+        action: "updateSettings", 
+        email: currentUserEmail, 
+        apiKey: apiKey, 
+        sheetUrl: sheetUrl, 
+        videoFolderUrl: videoFolderUrl, 
+        docFolderUrl: docFolderUrl 
+      });
+      
       if(res.status === 'success') {
-        // 優化 3：儲存成功後，將設定狀態設為 true
-        hasValidSettings = true;
+        const resultData = res.data; // 接收後端傳來的狀態物件
         
-        document.getElementById('settingsAlert').style.display = 'none';
-        if(res.data.includes("權限未開放")) {
-          showToast(res.data, "warning");
+        if(resultData.result === 'missing_permission') {
+          document.getElementById('settingsAlert').style.display = 'block';
+          document.getElementById('settingsAlert').innerText = resultData.message;
+          showToast("部分權限尚未開放，請檢查信箱通知！", "warning");
+          hasValidSettings = false; 
         } else {
-          showToast(res.data, "success");
+          hasValidSettings = true;
+          document.getElementById('settingsAlert').style.display = 'none';
+          showToast(resultData.message, "success");
+          btn.innerHTML = `<i data-lucide="check-circle" style="width:18px;"></i> 設定與權限驗證成功`;
+          btn.classList.replace('btn-brand', 'btn-outline');
         }
-      } else throw new Error(res.message);
-    } catch(e) { showToast(e.message, "error"); }
-    btn.disabled = false; btn.innerText = "儲存更新與驗證權限";
+      } else {
+        throw new Error(res.message);
+      }
+    } catch(e) { 
+      showToast(e.message, "error"); 
+      btn.innerHTML = `<i data-lucide="shield-check" style="width:18px;"></i> 儲存並驗證雲端權限`;
+    }
+    btn.disabled = false;
+    lucide.createIcons();
   }
 
   // --- 🎥 鏡頭與畫面機制 (極致優化版) ---
@@ -521,7 +587,7 @@
     }
     
     if (!hasValidSettings) {
-      showToast("請先點擊「儲存更新與驗證權限」並等待完成，再啟動錄製！", "error");
+      showToast("請先點擊「儲存並驗證雲端權限」並等待完成，再啟動錄製！", "error");
       return;
     }
 
